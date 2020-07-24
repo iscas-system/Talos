@@ -33,3 +33,12 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+
+
+# VS Code
+.settings/
+.vscode/
+
+# Eclipse
+.classpath
+.project
