@@ -26,6 +26,22 @@ model.fit(ds_train,
 
 3. 解压log文件夹中的json文件，使用本项目的分析代码，即可得到算子的加速比。
 
+### 预定义环境
+基于conda的虚拟python环境：
+
+pytorch可以兼容python最新版：
+
+```
+conda activate py38
+```
+
+TensorFlow只能用python旧版本：
+
+```
+conda activate py36
+```
+
+
 ### TensorFlow official models的统计方法
 
 需要改造官方模型仓库的https://github.com/Xuyuanjia2014/models代码，为其增加callback函数即可，official models中的tboard_callback添加位置，如下表所示（按照不同类别区分模型，模型本身已经自带相对稳定的benchmark数据集）：
@@ -39,7 +55,7 @@ model.fit(ds_train,
 |  NHNet   | official 自然语言处理  | [trainer.py](https://github.com/Xuyuanjia2014/models/blob/master/official/nlp/transformer/transformer_main.py) 149行 | 需要pip安装其他依赖，需要数据预处理  |
 |  Transformer  | official 自然语言处理  | [transformer_main.py](https://github.com/Xuyuanjia2014/models/blob/master/official/nlp/transformer/transformer_main.py) 347行 | 需要pip安装其他依赖，需要数据预处理  |
 |  XLNet  | official 自然语言处理  | [transformer_main.py](https://github.com/Xuyuanjia2014/models/blob/master/official/nlp/xlnet/run_classifier.py) 158行 | 与bert类似，但缺少命令，不过目测与bert操作的方式和参数一致  |
-|  NCF  | official 自然语言处理  | [ncf_keras_main.py](https://github.com/Xuyuanjia2014/models/blob/master/official/recommendation/ncf_keras_main.py) 321行 | 需要预下载数据  |
+|  NCF  | 推荐系统  | [ncf_keras_main.py](https://github.com/Xuyuanjia2014/models/blob/master/official/recommendation/ncf_keras_main.py) 321行 | 需要预下载数据  |
 
 
 
