@@ -61,7 +61,7 @@ conda activate py36
 
 1. MNIST等数据集无法下载的问题
 
-运行Proxy
+运行Proxy(切换文件夹中proxy的顺序，然后停止ctrl+c再启动，可以使用不同proxy，默认使用第一个)
 
 ```
 /root/clash/clash -d .
