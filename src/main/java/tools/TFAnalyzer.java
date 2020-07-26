@@ -41,11 +41,11 @@ public class TFAnalyzer {
                     "(SELECT #CPU_TABLE#.operator_name, AVG(#CPU_TABLE#.dur) / AVG(#GPU_TABLE#.dur) AS speedup,  AVG(#CPU_TABLE#.dur) AS cpu_dur, AVG(#GPU_TABLE#.dur) AS gpu_dur FROM #CPU_TABLE#, #GPU_TABLE# WHERE #CPU_TABLE#.operator_name = #GPU_TABLE#.operator_name " +
                     "GROUP BY operator_name ORDER BY speedup DESC)";
 
-    public static final String DEFAULT_MYSQL_ADDRESS = "jdbc:mysql://localhost:3307";
-    public static final String DEFAULT_DATABASE = "yangchen";
+    public static final String DEFAULT_MYSQL_ADDRESS = "jdbc:mysql://localhost:32769";
+    public static final String DEFAULT_DATABASE = "speedup";
 
     public static final String DEFAULT_USER = "root";
-    public static final String DEFAULT_PASSWORD = "yangchen";
+    public static final String DEFAULT_PASSWORD = "onceas2020";
 
 
     public static void main(String[] args) throws Exception {

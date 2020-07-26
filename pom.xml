@@ -64,7 +64,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.github.kubesys.synchronizer.Starter</mainClass>
+                            <mainClass>tools.TFAnalyzer</mainClass>
                         </manifest>
                         <manifestEntries>
                             <Class-Path>.</Class-Path>
