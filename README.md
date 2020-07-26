@@ -57,6 +57,25 @@ conda activate py36
 |  XLNet  | official 自然语言处理  | [transformer_main.py](https://github.com/Xuyuanjia2014/models/blob/master/official/nlp/xlnet/run_classifier.py) 158行 | 与bert类似，但缺少命令，不过目测与bert操作的方式和参数一致  |
 |  NCF  | 推荐系统  | [ncf_keras_main.py](https://github.com/Xuyuanjia2014/models/blob/master/official/recommendation/ncf_keras_main.py) 321行 | 需要预下载数据  |
 
+### 问题解决与注意事项
+
+1. MNIST等数据集无法下载的问题
+
+运行Proxy(切换文件夹中proxy的顺序，然后停止ctrl+c再启动，可以使用不同proxy，默认使用第一个)
+
+```
+/root/clash/clash -d .
+
+```
+新起命令行
+
+```
+export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7891
+
+curl www.google.com
+```
+如果有返回值就正常
+
 
 
 
