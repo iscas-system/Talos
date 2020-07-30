@@ -77,6 +77,27 @@ curl www.google.com
 如果有返回值就正常
 
 
+2. linux下的下载工具
+
+```
+cd /root/disk/utorrent-server-alpha-v3_3
+./utserver
+```
+
+新启窗口：
+
+```
+lsof -i:8080
+```
+
+打开本地浏览器，输入网址(可以下载utorrent种子)：
+```
+http://ip:8080/gui/
+```
+
+
+
+
 
 
 
