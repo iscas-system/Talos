@@ -90,7 +90,7 @@ cd /root/disk/utorrent-server-alpha-v3_3
 lsof -i:8080
 ```
 
-打开本地浏览器，输入网址(可以下载utorrent种子)：
+打开本地浏览器，输入网址(可以下载utorrent种子,用户名admin，密码为空)：
 ```
 http://ip:8080/gui/
 ```
