@@ -77,7 +77,7 @@ curl www.google.com
 如果有返回值就正常
 
 
-2. linux下的下载工具
+2. ubuntu下的下载工具
 
 ```
 cd /root/disk/utorrent-server-alpha-v3_3
@@ -95,6 +95,15 @@ lsof -i:8080
 http://ip:8080/gui/
 ```
 
+3. CentOS 7 64bit下的下载工具
+
+需要下载旧版本的openssl： http://rpmfind.net/linux/rpm2html/search.php?query=openssl098e：
+
+```
+rpm -ivh *.rpm
+```
+
+按照https://ylface.com/server/376要求安装旧版本
 
 
 
