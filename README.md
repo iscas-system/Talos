@@ -106,6 +106,12 @@ rpm -ivh *.rpm
 按照https://ylface.com/server/376要求安装旧版本
 
 
+4. linux间通过scp传输数据集
+
+```
+scp root@39.107.241.0:/root/disk/tensorflow-datasource/downloads/manual/ILSVRC2012_img_train.tar /root/tensorflow-datasource
+```
+
 
 
 
