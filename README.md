@@ -95,7 +95,7 @@ lsof -i:8080
 http://ip:8080/gui/
 ```
 
-3. CentOS 7 64bit下的下载工具
+3. CentOS 7 64bit下的下载工具（utorrent工具）
 
 需要下载旧版本的openssl： http://rpmfind.net/linux/rpm2html/search.php?query=openssl098e：
 
@@ -120,6 +120,12 @@ scp root@39.107.241.0:/root/disk/tensorflow-datasource/downloads/manual/ILSVRC20
 6. models、datasets和tf版本的对应关系
 
 202008时间，一般需要拉取TensorFlow2.3以上版本的支持，否则会出现编译选项等多种异常。
+
+7. centos7早期版本情况下，远程现在google storage中的数据时会出现openssl认证失败的问题，经过查询，应该是缺少crt文件，从可用环境中copy文件到目标系统中后才可用（原因未发现），文件位置如下：
+
+```
+sz /etc/ssl/certs/ca-certificates.crt CRLfile:none
+```
 
 
 
