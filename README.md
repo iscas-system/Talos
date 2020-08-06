@@ -112,6 +112,15 @@ rpm -ivh *.rpm
 scp root@39.107.241.0:/root/disk/tensorflow-datasource/downloads/manual/ILSVRC2012_img_train.tar /root/tensorflow-datasource
 ```
 
+5. 数据预处理时的问题(对imagenet 2012等需要手动下载并处理的datasets)
+
+需要使用脚本：[python -m tensorflow_datasets.scripts.download_and_prepare \ 
+ --datasets=imagenet2012](https://github.com/tensorflow/datasets/blob/master/docs/catalog/imagenet2012.md)
+
+6. models、datasets和tf版本的对应关系
+
+202008时间，一般需要拉取TensorFlow2.3以上版本的支持，否则会出现编译选项等多种异常。
+
 
 
 
