@@ -6,3 +6,5 @@ x = np.arange(12)
 fair_probs = [1.0 / 6]*6
 print(fair_probs)
 print(np.random.multinomial(10, fair_probs))
+print(dir(np.random))
+help(np.ones)

@@ -46,3 +46,9 @@ copy and change path:
     ]
 }
 ```
+
+## comments on dive to deep learning 
+
+1. 机器学习的过程：优化和泛化
+2. 计算图可以标记常量，避免全部微分，也能够控制微分分支
+3. 
