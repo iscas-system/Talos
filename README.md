@@ -47,6 +47,15 @@ copy and change path:
 }
 ```
 
+## d2l has some dependencies:
+
+```
+export PYTHONPATH=/root/d2l-en/mxnet
+pip install ipython
+pip install pandas
+pip install ipykernel
+```
+
 ## comments on dive to deep learning 
 
 1. 机器学习的过程：优化和泛化
