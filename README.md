@@ -50,7 +50,7 @@ copy and change path:
 ## d2l has some dependencies:
 
 ```
-export PYTHONPATH=/root/d2l-en/mxnet
+export PYTHONPATH=/root/d2l-en/mxnet 或 pip install d2l==0.13.2 -f https://d2l.ai/whl.html
 pip install ipython
 pip install pandas
 pip install ipykernel
