@@ -3,7 +3,6 @@ import torchvision
 model = torchvision.models.resnet18()
 inp   = torch.zeros([64, 3, 7, 7])
 for temp in model.children():
-    temp.cuda()
     print(temp)
 # for temp in model.children():
 #      print(temp.)
