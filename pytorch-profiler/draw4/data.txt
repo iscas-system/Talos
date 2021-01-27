@@ -1,0 +1,49 @@
+alexnet on gpu and squeezenet on cpu 
+Improve percentage:36.62%
+Improve percentage2:36.68%
+Improve percentage3:26.18%
+
+googlenet on gpu and squeezenet on cpu 
+Improve percentage:63.02%
+Improve percentage2:60.06%
+Improve percentage3:55.03%
+
+googlenet on gpu and alexnet on cpu 
+Improve percentage:64.92%
+Improve percentage2:62.02%
+Improve percentage3:47.97%
+
+bert on gpu and squeezenet on cpu 
+Improve percentage:66.12%
+Improve percentage2:66.37%
+Improve percentage3:55.96%
+
+bert on gpu and alexnet on cpu 
+Improve percentage:68.44%
+Improve percentage2:68.91%
+Improve percentage3:52.13%
+
+bert on gpu and googlenet on cpu 
+Improve percentage:28.09%
+Improve percentage2:27.85%
+Improve percentage3:16.71%
+
+resnet on gpu and squeezenet on cpu 
+Improve percentage:92.80%
+Improve percentage2:86.13%
+Improve percentage3:38.21%
+
+resnet on gpu and alexnet on cpu 
+Improve percentage:97.74%
+Improve percentage2:92.92%
+Improve percentage3:67.97%
+
+resnet on gpu and googlenet on cpu 
+Improve percentage:42.70%
+Improve percentage2:41.84%
+Improve percentage3:17.61%
+
+resnet on gpu and bert on cpu 
+Improve percentage:35.05%
+Improve percentage2:34.08%
+Improve percentage3:13.07%
