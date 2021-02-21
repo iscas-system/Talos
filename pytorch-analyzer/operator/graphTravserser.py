@@ -4,6 +4,7 @@
 # https://github.com/willmcgugan/rich
 # https://graphviz.readthedocs.io/en/stable/
 # https://benjamin-computer.medium.com/visualising-the-pytorch-compute-graph-for-bug-fixing-aa131324f34e
+# https://discuss.pytorch.org/t/traversing-computation-graph-and-seeing-saved-tensors-problem-edited-hopefuly-clearer/20575
 # def draw_graph(start, watch=[]):
 #     from graphviz import Digraph
 #     node_attr = dict(style='filled',
