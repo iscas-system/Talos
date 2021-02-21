@@ -12,3 +12,4 @@ input = input.view(1,64*64*3)
 print(input.shape)
 output = connected_layer(input) # 调用全连接层
 print(output.shape)
+print(output.grad_fn.next_functions)
