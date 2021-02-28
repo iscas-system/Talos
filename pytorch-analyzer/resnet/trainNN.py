@@ -61,9 +61,11 @@ test_data_loader  = torch.utils.data.DataLoader(test_data, batch_size=batch_size
 
 optimizer = optim.Adam(simplenet.parameters(), lr=loss_rate)
 
+usecuda = False
 if torch.cuda.is_available():
     print("cuda")
     device = torch.device("cuda") 
+    usecuda = True
 else:
     print("cpu")
     device = torch.device("cpu")
@@ -73,7 +75,7 @@ def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=1, device=
     for epoch in range(epochs):
         training_loss = 0.0
         valid_loss = 0.0
-        with torch.autograd.profiler.profile(use_cuda=False) as prof:
+        with torch.autograd.profiler.profile(use_cuda=usecuda) as prof:
             model.train()
             for batch in train_loader:
                 optimizer.zero_grad()

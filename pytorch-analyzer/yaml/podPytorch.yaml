@@ -7,10 +7,10 @@ spec: # PodSpec
   - name: demo
     image: pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime
     env:
-    - name: MODEL_HUB
-      value: "pytorch/vision"
+    - name: NUM_CLASSES
+      value: "2"
     - name: MODEL_NAME
-      value: "resnet50"
+      value: "alexnet"
     - name: TRAIN_SET
       value: "/workspace/pytorch_datasets/train/"
     - name: VAL_SET
@@ -32,8 +32,8 @@ spec: # PodSpec
     command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
     resources:
       limits:
-        cpu: "2"
-        memory: "1Gi"
+        cpu: "6"
+        memory: "4Gi"
     volumeMounts:
     - mountPath: /workspace
       name: code-data
