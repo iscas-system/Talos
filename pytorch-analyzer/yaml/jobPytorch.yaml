@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: trainnnjob
+spec: # PodSpec
+  template:
+    metadata:
+      name: train
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: demo
+        image: pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime
+        env:
+        - name: NUM_CLASSES
+          value: "2"
+        - name: MODEL_NAME
+          value: "alexnet"
+        - name: TRAIN_SET
+          value: "/workspace/pytorch_datasets/train/"
+        - name: VAL_SET
+          value: "/workspace/pytorch_datasets/val/"
+        - name: TEST_SET
+          value: "/workspace/pytorch_datasets/test/"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: TRACE_FOLDER
+          value: "/workspace/pytorch_datasets/traces/"
+        - name: EPOCHS
+          value: "1"
+        - name: LOSS_RATE
+          value: "0.001"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "-1"
+        #command: ["nvidia-smi", "-L"]
+        command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
+        #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+        resources:
+          limits:
+            cpu: "1"
+            memory: "4Gi"
+        volumeMounts:
+        - mountPath: /workspace
+          name: code-data
+      volumes:
+      - name: code-data
+        hostPath:
+          path: /root/github
+          type: Directory
