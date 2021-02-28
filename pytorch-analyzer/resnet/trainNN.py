@@ -19,17 +19,21 @@ def readVariable(key, defaultValue):
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 # all changable variables in docker:
-modelHub = readVariable("MODEL_HUB", "pytorch/vision")
-modelName = readVariable("MODEL_NAME", "resnet50")
-train_data_path = readVariable("TRAIN_SET", "./train/")
-val_data_path = readVariable("VAL_SET", "./val/")
-test_data_path = readVariable("TEST_SET","./test/")
+modelName = readVariable("MODEL_NAME", "alexnet")
+num_classes = int(readVariable("NUM_CLASSES","2"))
+train_data_path = readVariable("TRAIN_SET", "/root/github/pytorch_datasets/train/")
+val_data_path = readVariable("VAL_SET", "/root/github/pytorch_datasets/val/")
+test_data_path = readVariable("TEST_SET","/root/github/pytorch_datasets/test/")
 batch_size=int(readVariable("BATCH_SIZE","64"))
 trace_name=readVariable("TRACE_FOLDER","/tmp/") + modelName + time.strftime("%Y%m%d%H%M%S", time.localtime()) + ".json" 
 epochs = int(readVariable("EPOCHS", "1"))
 loss_rate = float(readVariable("LOSS_RATE", "0.001"))
 
-simplenet = torch.hub.load(modelHub, modelName)
+if modelName == "alexnet":
+    simplenet = models.alexnet(num_classes=num_classes)
+else :
+    simplenet = models.alexnet(num_classes=num_classes)
+
 ImageFile.LOAD_TRUNCATED_IMAGES=True
 
 def check_image(path):
@@ -89,7 +93,7 @@ def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=1, device=
 
         num_correct = 0 
         num_examples = 0
-        for batch in val_loader:
+        for batch in  val_loader:
             inputs, targets = batch
             inputs = inputs.to(device)
             output = model(inputs)

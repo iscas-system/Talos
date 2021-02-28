@@ -1,14 +1,7 @@
-apiVersion: kubeshare.nthu/v1
-kind: SharePod
+apiVersion: v1
+kind: Pod
 metadata:
   name: trainnn
-  annotations:
-    "kubeshare/gpu_request": "0.5" # required if allocating GPU
-    "kubeshare/gpu_limit": "1.0" # required if allocating GPU
-    "kubeshare/gpu_mem": "1073741824" # required if allocating GPU # 1Gi, in bytes
-    #"kubeshare/sched_affinity": "red" # optional
-    #"kubeshare/sched_anti-affinity": "green" # optional
-    #"kubeshare/sched_exclusion": "blue" # optional
 spec: # PodSpec
   containers:
   - name: demo
@@ -45,7 +38,7 @@ spec: # PodSpec
     - mountPath: /workspace
       name: code-data
   volumes:
-    name: code-data
+  - name: code-data
     hostPath:
       path: /root/github
       type: Directory
