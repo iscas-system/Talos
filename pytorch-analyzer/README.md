@@ -24,6 +24,12 @@ from https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/insta
 from https://docs.docker.com/engine/install/ubuntu/
 ```
 
+with single master, you need to taint master first:
+
+```
+kubectl taint node xyj-precision-tower-3620 node-role.kubernetes.io/master-
+```
+
 4. install nvidia-docker:
 
 ```
