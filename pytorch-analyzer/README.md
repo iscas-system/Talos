@@ -61,3 +61,11 @@ spec: # PodSpec
         cpu: "1"
         memory: "500Mi"
 ```
+
+# Running in Docker
+
+1. sets proper environment variables:
+
+2. prepare train, test and evaluation data through volume mount.
+
+3. collect json data with different yaml settings.

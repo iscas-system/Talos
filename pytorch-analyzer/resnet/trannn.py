@@ -5,12 +5,31 @@ import torch.utils.data
 import torch.nn.functional as F
 import torchvision
 from torchvision import transforms
+import time
 from PIL import Image, ImageFile
-import resnet50
+import torchvision.models as models
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+def readVariable(key, defaultValue):
+    value = os.getenv(key, 'null')
+    print('read env key: {0}, value:{1}'.format( key, value))
+    if value == 'null' :
+        return defaultValue
+    return value
 
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# all changable variables in docker:
+modelHub = readVariable("MODEL_HUB", "pytorch/vision")
+modelName = readVariable("MODEL_NAME", "resnet50")
+train_data_path = readVariable("TRAIN_SET", "./train/")
+val_data_path = readVariable("VAL_SET", "./val/")
+test_data_path = readVariable("TEST_SET","./test/")
+batch_size=int(readVariable("BATCH_SIZE","64"))
+trace_name=readVariable("TRACE_FOLDER","/tmp/") + modelName + time.strftime("%Y%m%d%H%M%S", time.localtime()) + ".json" 
+epochs = int(readVariable("EPOCHS", "1"))
+loss_rate = float(readVariable("LOSS_RATE", "0.001"))
+
+simplenet = torch.hub.load(modelHub, modelName)
 ImageFile.LOAD_TRUNCATED_IMAGES=True
 
 def check_image(path):
@@ -27,26 +46,16 @@ img_transforms = transforms.Compose([
                     std=[0.229, 0.224, 0.225] )
     ])
 
-train_data_path = "/root/github/beginners-pytorch-deep-learning/chapter2/train/"
+
 train_data = torchvision.datasets.ImageFolder(root=train_data_path,transform=img_transforms, is_valid_file=check_image)
-
-
-val_data_path = "/root/github/beginners-pytorch-deep-learning/chapter2/val/"
 val_data = torchvision.datasets.ImageFolder(root=val_data_path,transform=img_transforms, is_valid_file=check_image)
-
-test_data_path = "/root/github/beginners-pytorch-deep-learning/chapter2/test/"
 test_data = torchvision.datasets.ImageFolder(root=test_data_path,transform=img_transforms, is_valid_file=check_image)
-
-batch_size=64
-
-
 
 train_data_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size)
 val_data_loader  = torch.utils.data.DataLoader(val_data, batch_size=batch_size) 
 test_data_loader  = torch.utils.data.DataLoader(test_data, batch_size=batch_size)
 
-simplenet = resnet50.resnet50
-optimizer = optim.Adam(simplenet.parameters(), lr=0.001)
+optimizer = optim.Adam(simplenet.parameters(), lr=loss_rate)
 
 if torch.cuda.is_available():
     print("cuda")
@@ -56,7 +65,7 @@ else:
     device = torch.device("cpu")
 simplenet.to(device)
 
-def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=20, device="cpu"):
+def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=1, device="cpu"):
     for epoch in range(epochs):
         training_loss = 0.0
         valid_loss = 0.0
@@ -73,7 +82,7 @@ def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=20, device
                 optimizer.step()
                 training_loss += loss.data.item() * inputs.size(0)
         # print(prof)
-        prof.export_chrome_trace("/tmp/resnet50_CPU.json")
+        prof.export_chrome_trace(trace_name)
         print("Exported trace")
         training_loss /= len(train_loader.dataset)
         model.eval()
@@ -95,7 +104,7 @@ def train(model, optimizer, loss_fn, train_loader, val_loader, epochs=20, device
         print('Epoch: {}, Training Loss: {:.2f}, Validation Loss: {:.2f}, accuracy = {:.2f}'.format(epoch, training_loss,
         valid_loss, num_correct / num_examples))
 
-train(simplenet, optimizer,torch.nn.CrossEntropyLoss(), train_data_loader,val_data_loader, epochs=1, device=device)
+train(simplenet, optimizer,torch.nn.CrossEntropyLoss(), train_data_loader,val_data_loader, epochs=epochs, device=device)
 
 # labels = ['cat','fish']
 
