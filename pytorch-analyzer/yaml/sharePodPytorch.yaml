@@ -33,14 +33,14 @@ spec: # PodSpec
     - name: LOSS_RATE
       value: "0.001"
     - name: CUDA_VISIBLE_DEVICES
-      value: "-1"
+      value: "1"
     #command: ["nvidia-smi", "-L"]
     #command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
     command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
-    resources:
-      limits:
-        cpu: "2"
-        memory: "1Gi"
+    #resources:
+    #  limits:
+    #    cpu: "2"
+    #    memory: "1Gi"
     volumeMounts:
     - mountPath: /workspace
       name: code-data

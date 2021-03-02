@@ -62,6 +62,7 @@ test_data_loader  = torch.utils.data.DataLoader(test_data, batch_size=batch_size
 optimizer = optim.Adam(simplenet.parameters(), lr=loss_rate)
 
 usecuda = False
+torch.cuda.device_count()
 if torch.cuda.is_available():
     print("cuda")
     device = torch.device("cuda") 
