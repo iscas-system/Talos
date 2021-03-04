@@ -5,15 +5,19 @@ metadata:
   annotations:
     "kubeshare/gpu_request": "0.5" # required if allocating GPU
     "kubeshare/gpu_limit": "1.0" # required if allocating GPU
-    "kubeshare/gpu_mem": "1073741824" # required if allocating GPU # 1Gi, in bytes
+    "kubeshare/gpu_mem": "2147483648" # required if allocating GPU # 1Gi, in bytes
     #"kubeshare/sched_affinity": "red" # optional
     #"kubeshare/sched_anti-affinity": "green" # optional
     #"kubeshare/sched_exclusion": "blue" # optional
 spec: # PodSpec
+  restartPolicy: Never
   containers:
   - name: demo
-    image: pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime
+    imagePullPolicy: Never
+    image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
     env:
+    #- name: NVIDIA_VISIBLE_DEVICES
+    #  value: "all"
     - name: MODEL_HUB
       value: "pytorch/vision"
     - name: MODEL_NAME
@@ -32,8 +36,8 @@ spec: # PodSpec
       value: "1"
     - name: LOSS_RATE
       value: "0.001"
-    - name: CUDA_VISIBLE_DEVICES
-      value: "1"
+    #- name: CUDA_VISIBLE_DEVICES
+    #  value: "1"
     #command: ["nvidia-smi", "-L"]
     #command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
     command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]

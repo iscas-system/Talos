@@ -10,7 +10,7 @@ spec: # PodSpec
       restartPolicy: Never
       containers:
       - name: demo
-        image: pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime
+        image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
         env:
         - name: NUM_CLASSES
           value: "2"
@@ -31,10 +31,10 @@ spec: # PodSpec
         - name: LOSS_RATE
           value: "0.001"
         - name: CUDA_VISIBLE_DEVICES
-          value: "-1"
+          value: "0"
         #command: ["nvidia-smi", "-L"]
-        command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
-        #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+        #command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
+        command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
         resources:
           limits:
             cpu: "1"
