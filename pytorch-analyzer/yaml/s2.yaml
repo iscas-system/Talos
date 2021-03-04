@@ -1,23 +1,25 @@
 apiVersion: kubeshare.nthu/v1
 kind: SharePod
 metadata:
-  name: trainnn
+  name: trainnn811
   annotations:
-    "kubeshare/gpu_request": "0.5" # required if allocating GPU
-    "kubeshare/gpu_limit": "1.0" # required if allocating GPU
-    "kubeshare/gpu_mem": "2147483648" # required if allocating GPU # 1Gi, in bytes
+    "kubeshare/gpu_request": "0.8" # required if allocating GPU
+    "kubeshare/gpu_limit": "0.8" # required if allocating GPU
+    "kubeshare/gpu_mem": "1610612736" # required if allocating GPU # 1Gi, in bytes
     #"kubeshare/sched_affinity": "red" # optional
     #"kubeshare/sched_anti-affinity": "green" # optional
     #"kubeshare/sched_exclusion": "blue" # optional
 spec: # PodSpec
   restartPolicy: Never
   containers:
-  - name: demo
+  - name: trainnn811
     imagePullPolicy: Never
     image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
     env:
     #- name: NVIDIA_VISIBLE_DEVICES
     #  value: "all"
+    - name: GPU_FRACTION
+      value: "GF80"
     - name: MODEL_HUB
       value: "pytorch/vision"
     - name: MODEL_NAME
@@ -31,20 +33,20 @@ spec: # PodSpec
     - name: BATCH_SIZE
       value: "32"
     - name: TRACE_FOLDER
-      value: "/workspace/pytorch_datasets/traces/"
+      value: "/workspace/pytorch_datasets/traces/gpu/"
     - name: EPOCHS
       value: "1"
     - name: LOSS_RATE
       value: "0.001"
-    #- name: CUDA_VISIBLE_DEVICES
-    #  value: "1"
+    # - name: CUDA_VISIBLE_DEVICES
+    #   value: "-1"
     #command: ["nvidia-smi", "-L"]
-    #command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
-    command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
-    #resources:
-    #  limits:
-    #    cpu: "2"
-    #    memory: "1Gi"
+    command: ["python", "-u" , "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
+    #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+    resources:
+     limits:
+       cpu: "3"
+    #    memory: "2Gi"
     volumeMounts:
     - mountPath: /workspace
       name: code-data

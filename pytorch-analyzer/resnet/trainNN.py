@@ -25,7 +25,8 @@ train_data_path = readVariable("TRAIN_SET", "/root/github/pytorch_datasets/train
 val_data_path = readVariable("VAL_SET", "/root/github/pytorch_datasets/val/")
 test_data_path = readVariable("TEST_SET","/root/github/pytorch_datasets/test/")
 batch_size=int(readVariable("BATCH_SIZE","64"))
-trace_name=readVariable("TRACE_FOLDER","/tmp/") + modelName + time.strftime("%Y%m%d%H%M%S", time.localtime()) + ".json" 
+gpuf = readVariable("GPU_FRACTION", "")
+trace_name=readVariable("TRACE_FOLDER","/tmp/") + gpuf+modelName + time.strftime("%Y%m%d%H%M%S", time.localtime()) + ".json" 
 epochs = int(readVariable("EPOCHS", "1"))
 loss_rate = float(readVariable("LOSS_RATE", "0.001"))
 
