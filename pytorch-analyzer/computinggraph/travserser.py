@@ -65,14 +65,36 @@
 #                     if pobj is not None:
 #                         graph.edge(str(pobj), str(joy))
 
+# import torch
+
+# x = torch.Tensor([2])
+# w = torch.randn(1,requires_grad=True)
+# b =torch.randn(1,requires_grad=True)
+# y = torch.mul(w,x)
+# z = torch.add(y,b)
+
+# print(w)
+# print(x)
+# print(y.grad_fn.next_functions)
+
 import torch
+# Simple module for demonstration
+class MyModule(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.param = torch.nn.Parameter(torch.rand(3, 4))
+        self.linear = torch.nn.Linear(4, 5)
 
-x = torch.Tensor([2])
-w = torch.randn(1,requires_grad=True)
-b =torch.randn(1,requires_grad=True)
-y = torch.mul(w,x)
-z = torch.add(y,b)
+    def forward(self, x):
+        return self.linear(x + self.param).clamp(min=0.0, max=1.0)
 
-print(w)
-print(x)
-print(y.grad_fn.next_functions)
+module = MyModule()
+
+from torch.fx import symbolic_trace
+# Symbolic tracing frontend - captures the semantics of the module
+symbolic_traced : torch.fx.GraphModule = symbolic_trace(module)
+
+# High-level intermediate representation (IR) - Graph representation
+print(symbolic_traced.graph)
+
+print(symbolic_traced.code)
