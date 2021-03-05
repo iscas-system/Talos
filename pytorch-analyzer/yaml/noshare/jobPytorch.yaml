@@ -33,7 +33,7 @@ spec: # PodSpec
         - name: CUDA_VISIBLE_DEVICES
           value: "0"
         #command: ["nvidia-smi", "-L"]
-        #command: ["python", "/workspace/Talos/pytorch-analyzer/resnet/trainNN.py"]
+        #command: ["python", "/workspace/Talos/pytorch-analyzer/trainmodel/trainNN.py"]
         command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
         resources:
           limits:
