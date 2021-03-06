@@ -89,6 +89,8 @@ cpu = torch.device('cpu',0)
 cuda = torch.device('cuda',0)
 print(cpu)
 print(cuda)
+print(torch.get_num_threads())
+print(torch.get_num_interop_threads())
 
 # Simple module for demonstration
 class MyModule(torch.nn.Module):
@@ -98,19 +100,24 @@ class MyModule(torch.nn.Module):
         self.linear = torch.nn.Linear(4, 5)
 
     def forward(self, x):
-        x = x.to("cpu:0")
+        # x = x.to("cpu:0")
         y = self.linear(x + self.param)
-        y = y.to("cuda:0")
+        # y = y.to("cuda:0")
         return y.clamp(min=0.0, max=1.0)
 
-module = MyModule()
-torch
+module = MyModule().to(cpu)
 
-from torch.fx import symbolic_trace
-# Symbolic tracing frontend - captures the semantics of the module
-symbolic_traced : torch.fx.GraphModule = symbolic_trace(module)
+with torch.autograd.profiler.profile(use_cuda=False) as prof:
+    input = torch.randn(3, 4,device="cpu")
+    output = module.forward(x=input)
+    print(output)
+print("Exported trace")
+prof.export_chrome_trace("/tmp/test1.json")
+# from torch.fx import symbolic_trace
+# # Symbolic tracing frontend - captures the semantics of the module
+# symbolic_traced : torch.fx.GraphModule = symbolic_trace(module)
 
-# High-level intermediate representation (IR) - Graph representation
-print(symbolic_traced.graph)
+# # High-level intermediate representation (IR) - Graph representation
+# print(symbolic_traced.graph)
 
-print(symbolic_traced.code)
+# print(symbolic_traced.code)
