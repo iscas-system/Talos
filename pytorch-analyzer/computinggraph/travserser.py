@@ -78,6 +78,18 @@
 # print(y.grad_fn.next_functions)
 
 import torch
+import os
+import psutil
+
+# print(os.cpu_count())
+# print(torch.cuda.device_count())
+# print(psutil.cpu_count())
+
+cpu = torch.device('cpu',0)
+cuda = torch.device('cuda',0)
+print(cpu)
+print(cuda)
+
 # Simple module for demonstration
 class MyModule(torch.nn.Module):
     def __init__(self):
@@ -86,9 +98,13 @@ class MyModule(torch.nn.Module):
         self.linear = torch.nn.Linear(4, 5)
 
     def forward(self, x):
-        return self.linear(x + self.param).clamp(min=0.0, max=1.0)
+        x = x.to("cpu:0")
+        y = self.linear(x + self.param)
+        y = y.to("cuda:0")
+        return y.clamp(min=0.0, max=1.0)
 
 module = MyModule()
+torch
 
 from torch.fx import symbolic_trace
 # Symbolic tracing frontend - captures the semantics of the module
