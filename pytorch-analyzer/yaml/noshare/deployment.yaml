@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+        image: pytorch/pytorch:1.8.0-cuda11.1-cudnn8-devel
+        volumeMounts:
+        - mountPath: /workspace
+          name: code-data
+      volumes:
+      - name: code-data
+        hostPath:
+          path: /root/github
+          type: Directory
+ 
