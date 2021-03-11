@@ -80,6 +80,7 @@
 import torch
 import os
 import psutil
+from torch.fx import symbolic_trace
 
 # print(os.cpu_count())
 # print(torch.cuda.device_count())
@@ -102,22 +103,26 @@ class MyModule(torch.nn.Module):
     def forward(self, x):
         # x = x.to("cpu:0")
         y = self.linear(x + self.param)
-        # y = y.to("cuda:0")
+        y = y.to("cuda:0")
         return y.clamp(min=0.0, max=1.0)
 
 module = MyModule().to(cpu)
 
-with torch.autograd.profiler.profile(use_cuda=False) as prof:
-    input = torch.randn(3, 4,device="cpu")
-    output = module.forward(x=input)
-    print(output)
-print("Exported trace")
-prof.export_chrome_trace("/tmp/test1.json")
-# from torch.fx import symbolic_trace
-# # Symbolic tracing frontend - captures the semantics of the module
-# symbolic_traced : torch.fx.GraphModule = symbolic_trace(module)
+# with torch.autograd.profiler.profile(use_cuda=False) as prof:
+#     input = torch.randn(3, 4,device="cpu")
+#     output = module.forward(x=input)
+#     print(output)
+# print("Exported trace")
+# prof.export_chrome_trace("/tmp/test1.json")
 
+# # Symbolic tracing frontend - captures the semantics of the module
+symbolic_traced : torch.fx.GraphModule = symbolic_trace(module)
+input = torch.randn(3, 4,device="cpu")
+ret = torch.jit.trace(module,input)
 # # High-level intermediate representation (IR) - Graph representation
-# print(symbolic_traced.graph)
+print(symbolic_traced.graph)
+
+print("good")
+print(ret.graph)
 
 # print(symbolic_traced.code)
