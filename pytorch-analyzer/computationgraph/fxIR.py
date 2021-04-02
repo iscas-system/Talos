@@ -24,13 +24,13 @@ class MyModule(torch.nn.Module):
 
     def forward(self, x):
         # x = x.to("cpu:0")
-        xx = torch.add(x,self.param)
-        y = self.linear(xx)
+        y = self.linear(x+self.param)
         y = y.to("cuda:0")
         return y.clamp(min=0.0, max=1.0)
 
-def timeSpot(args):
+def timeSpot(*args):
     print(time.time_ns())
+    # result = args[0].target(*load_arg(args[0].args), **load_arg(node.kwargs))
     return args
 
 def transform(m: torch.nn.Module,
@@ -41,14 +41,20 @@ def transform(m: torch.nn.Module,
     for node in graph.nodes:
         # Checks if we're calling a function (i.e:
         # torch.add
-        if node.op == 'call_function':
+        if node.target != timeSpot:
+            preNode = graph.call_function(timeSpot)
+            node.prepend(preNode)
+            # afterNode = graph.call_function(timeSpot)
+            
+            # node.append(afterNode)
             # The target attribute is the function
             # that call_function calls.
-            if node.target == torch.add:
-                # node.target = torch.mul
-                with graph.inserting_before(node):
-                    newnode = graph.call_function(timeSpot,args=node.args)
-                    node.args = (newnode,)
+            # node.target = torch.mul
+            # with graph.inserting_before(node):
+            #     print(timeSpot(node.args))
+                 
+            #     node.args = torch.fx.graph.map_arg((newnode,)[0], lambda x: x)
+
     graph.lint() # Does some checks to make sure the
                  # Graph is well-formed.
     return torch.fx.GraphModule(m, graph)
@@ -64,10 +70,9 @@ print(module2.graph)
 # input = torch.randn(3, 4,device="cpu")
 # output = module.forward(x=input)
 # print(output)
-
-# input2 = torch.randn(3, 4,device="cpu")
-# output2 = module2.forward(x=input)
-# print(output2)
+input2 = torch.randn(3, 4,device="cpu")
+output2 = module2.forward(x=input2)
+print(output2)
 
 # with torch.autograd.profiler.profile(use_cuda=False) as prof:
 
