@@ -3,6 +3,7 @@ import torch.fx
 import os
 import psutil
 import time
+import executiveEngine
 
 # print(os.cpu_count())
 # print(torch.cuda.device_count())
@@ -64,15 +65,17 @@ symbolic_traced : torch.fx.GraphModule = torch.fx.symbolic_trace(module)
 # input = torch.randn(3, 4,device="cpu")
 # ret = torch.jit.trace(module,input)
 print(symbolic_traced.graph)
-module2 = transform(module)
-print(module2.graph)
+for node in symbolic_traced.graph.nodes:
+    print(node.op)
+# module2 = transform(module)
+# print(module2.graph)
 
 # input = torch.randn(3, 4,device="cpu")
 # output = module.forward(x=input)
 # print(output)
 input2 = torch.randn(3, 4,device="cpu")
-output2 = module2.forward(x=input2)
-print(output2)
+# output2 = module2.forward(x=input2)
+# print(output2)
 
 # with torch.autograd.profiler.profile(use_cuda=False) as prof:
 
@@ -84,3 +87,5 @@ print(output2)
 
 # print(symbolic_traced.code)
 
+sp = executiveEngine.ShapeProp(symbolic_traced) 
+print(sp.propagate(input2))
