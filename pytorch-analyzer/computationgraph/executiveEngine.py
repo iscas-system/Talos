@@ -1,6 +1,7 @@
 import torch
 import torch.fx
 from torch.fx.node import Node
+import time
 
 from typing import Dict
 
@@ -37,12 +38,13 @@ class ShapeProp:
 
         for node in self.graph.nodes:
             if node.op == 'placeholder':
-                print(node.op)
                 result = next(args_iter)
             elif node.op == 'get_attr':
                 result = fetch_attr(node.target)
             elif node.op == 'call_function':
+                print(time.time_ns())
                 result = node.target(*load_arg(node.args), **load_arg(node.kwargs))
+                print(time.time_ns())
             elif node.op == 'call_method':
                 self_obj, *args = load_arg(node.args)
                 kwargs = load_arg(node.kwargs)
