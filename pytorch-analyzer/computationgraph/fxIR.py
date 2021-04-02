@@ -29,9 +29,9 @@ class MyModule(torch.nn.Module):
         y = y.to("cuda:0")
         return y.clamp(min=0.0, max=1.0)
 
-def timeSpot():
+def timeSpot(args):
     print(time.time_ns())
-    return torch.rand(3, 4)
+    return args
 
 def transform(m: torch.nn.Module,
               tracer_class : type = torch.fx.Tracer) -> torch.nn.Module:
@@ -46,8 +46,9 @@ def transform(m: torch.nn.Module,
             # that call_function calls.
             if node.target == torch.add:
                 # node.target = torch.mul
-                with graph.inserting_after(node):
-                    graph.call_function(timeSpot)
+                with graph.inserting_before(node):
+                    newnode = graph.call_function(timeSpot,args=node.args)
+                    node.args = (newnode,)
     graph.lint() # Does some checks to make sure the
                  # Graph is well-formed.
     return torch.fx.GraphModule(m, graph)
