@@ -36,7 +36,7 @@ env : Dict[str, Node] = {}
 def load_arg(a):
     return torch.fx.graph.map_arg(a, lambda n: env[n.name])
 
-def timeSpot(*args,**kwargs):
+def timeSpot1(*args):
     print(time.time_ns())
     # result = args[0].target(*load_arg(args[0].args), **load_arg(node.kwargs))
     print(len(args))
@@ -44,9 +44,17 @@ def timeSpot(*args,**kwargs):
         print(i)
         print("end i")
     print(len(args))
-    kwargs['fisrt'] = args[0]
-    kwargs['second'] = args[1]
-    return args
+    return args[0]
+
+def timeSpot2(*args):
+    print(time.time_ns())
+    # result = args[0].target(*load_arg(args[0].args), **load_arg(node.kwargs))
+    print(len(args))
+    for i in args:
+        print(i)
+        print("end i")
+    print(len(args))
+    return args[1]
 
 def transform(m: torch.nn.Module,
               tracer_class : type = torch.fx.Tracer) -> torch.nn.Module:
@@ -56,13 +64,15 @@ def transform(m: torch.nn.Module,
     for node in graph.nodes:
         # need to avoid recursive errors.
         if node.op == 'call_module':
-            preNode = graph.call_function(timeSpot,args=node._prev.args,type_expr=Tuple['Argument', ...])
+            preNode1 = graph.call_function(timeSpot1,args=node._prev.args)
+            preNode2 = graph.call_function(timeSpot2,args=node._prev.args)
             # afterNode = graph.call_function(timeSpot)
             # print("good")
             # node.append(afterNode)
             # print(node._next.target)
-            node._prev.prepend(preNode)
-            node._prev.args = (preNode.kwargs['first'],preNode.kwargs['second'])
+            node._prev.prepend(preNode1)
+            node._prev.prepend(preNode2)
+            node._prev.args = (preNode1,preNode2)
             
             # node.append(afterNode)
             # The target attribute is the function
