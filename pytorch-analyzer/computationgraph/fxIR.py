@@ -4,6 +4,8 @@ import os
 import psutil
 import time
 import executiveEngine
+from typing import Dict,Tuple
+from torch.fx.node import Node
 
 # print(os.cpu_count())
 # print(torch.cuda.device_count())
@@ -29,9 +31,21 @@ class MyModule(torch.nn.Module):
         y = y.to("cuda:0")
         return y.clamp(min=0.0, max=1.0)
 
-def timeSpot(*args):
+env : Dict[str, Node] = {}
+
+def load_arg(a):
+    return torch.fx.graph.map_arg(a, lambda n: env[n.name])
+
+def timeSpot(*args,**kwargs):
     print(time.time_ns())
     # result = args[0].target(*load_arg(args[0].args), **load_arg(node.kwargs))
+    print(len(args))
+    for i in args:
+        print(i)
+        print("end i")
+    print(len(args))
+    kwargs['fisrt'] = args[0]
+    kwargs['second'] = args[1]
     return args
 
 def transform(m: torch.nn.Module,
@@ -40,16 +54,15 @@ def transform(m: torch.nn.Module,
     # FX represents its Graph as an ordered list of
     # nodes, so we can iterate through them.
     for node in graph.nodes:
-        # Checks if we're calling a function (i.e:
-        # torch.add
+        # need to avoid recursive errors.
         if node.op == 'call_module':
-            preNode = graph.call_function(timeSpot)
-            afterNode = graph.call_function(timeSpot)
-            print("good")
-            node.append(preNode)
-            print(node._next.target)
-            node.prepend(afterNode)
-            
+            preNode = graph.call_function(timeSpot,args=node._prev.args,type_expr=Tuple['Argument', ...])
+            # afterNode = graph.call_function(timeSpot)
+            # print("good")
+            # node.append(afterNode)
+            # print(node._next.target)
+            node._prev.prepend(preNode)
+            node._prev.args = (preNode.kwargs['first'],preNode.kwargs['second'])
             
             # node.append(afterNode)
             # The target attribute is the function
@@ -78,9 +91,9 @@ print(module2.graph)
 # input = torch.randn(3, 4,device="cpu")
 # output = module.forward(x=input)
 # print(output)
-# input2 = torch.randn(3, 4,device="cpu")
-# output2 = module2.forward(x=input2)
-# print(output2)
+input2 = torch.randn(3, 4,device="cpu")
+output2 = module2.forward(x=input2)
+print(output2)
 
 # with torch.autograd.profiler.profile(use_cuda=False) as prof:
 
