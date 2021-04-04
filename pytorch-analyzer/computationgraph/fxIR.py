@@ -42,10 +42,14 @@ def transform(m: torch.nn.Module,
     for node in graph.nodes:
         # Checks if we're calling a function (i.e:
         # torch.add
-        if node.target != timeSpot:
+        if node.op == 'call_module':
             preNode = graph.call_function(timeSpot)
-            node.prepend(preNode)
-            # afterNode = graph.call_function(timeSpot)
+            afterNode = graph.call_function(timeSpot)
+            print("good")
+            node.append(preNode)
+            print(node._next.target)
+            node.prepend(afterNode)
+            
             
             # node.append(afterNode)
             # The target attribute is the function
@@ -65,15 +69,16 @@ symbolic_traced : torch.fx.GraphModule = torch.fx.symbolic_trace(module)
 # input = torch.randn(3, 4,device="cpu")
 # ret = torch.jit.trace(module,input)
 print(symbolic_traced.graph)
-for node in symbolic_traced.graph.nodes:
-    print(node.op)
-# module2 = transform(module)
-# print(module2.graph)
+# for node in symbolic_traced.graph.nodes:
+#     print(node.op)
+print("After add fx graph:\n")
+module2 = transform(module)
+print(module2.graph)
 
 # input = torch.randn(3, 4,device="cpu")
 # output = module.forward(x=input)
 # print(output)
-input2 = torch.randn(3, 4,device="cpu")
+# input2 = torch.randn(3, 4,device="cpu")
 # output2 = module2.forward(x=input2)
 # print(output2)
 
@@ -87,5 +92,5 @@ input2 = torch.randn(3, 4,device="cpu")
 
 # print(symbolic_traced.code)
 
-sp = executiveEngine.ShapeProp(symbolic_traced) 
-print(sp.propagate(input2))
+# sp = executiveEngine.ShapeProp(symbolic_traced) 
+# print(sp.propagate(input2))
