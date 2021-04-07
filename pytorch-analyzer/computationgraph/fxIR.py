@@ -7,16 +7,16 @@ import executiveEngine
 from typing import Dict,Tuple
 from torch.fx.node import Node
 
-# print(os.cpu_count())
-# print(torch.cuda.device_count())
+print(os.cpu_count())
+print(torch.cuda.device_count())
 # print(psutil.cpu_count())
 
-cpu = torch.device('cpu',0)
-cuda = torch.device('cuda',0)
-print(cpu)
-print(cuda)
-print(torch.get_num_threads())
-print(torch.get_num_interop_threads())
+# cpu = torch.device('cpu',0)
+# cuda = torch.device('cuda',0)
+# print(cpu)
+# print(cuda)
+# print(torch.get_num_threads())
+# print(torch.get_num_interop_threads())
 
 # Simple module for demonstration
 class MyModule(torch.nn.Module):
@@ -28,7 +28,7 @@ class MyModule(torch.nn.Module):
     def forward(self, x):
         # x = x.to("cpu:0")
         y = self.linear(x+self.param)
-        y = y.to("cuda:0")
+        # y = y.to("cuda:0")
         return y.clamp(min=0.0, max=1.0)
 
 env : Dict[str, Node] = {}
@@ -87,15 +87,15 @@ def transform(m: torch.nn.Module,
                  # Graph is well-formed.
     return torch.fx.GraphModule(m, graph)
 
-module = MyModule().to(cpu)
+module = MyModule().to("cpu")
 symbolic_traced : torch.fx.GraphModule = torch.fx.symbolic_trace(module)
 # input = torch.randn(3, 4,device="cpu")
 # ret = torch.jit.trace(module,input)
 print(symbolic_traced.graph)
 sp = executiveEngine.ShapeProp(symbolic_traced)
 input2 = torch.randn(3, 4,device="cpu")
-module2 = transform(module)
-output2 = module2.forward(x=input2)
+# module2 = transform(module)
+output2 = symbolic_traced.forward(x=input2)
 print("Forward result:")
 print(output2) 
 print("Graph result:")

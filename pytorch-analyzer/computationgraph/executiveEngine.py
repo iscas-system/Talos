@@ -21,11 +21,16 @@ class ShapeProp:
         self.mod = mod
         self.graph = mod.graph
         self.modules = dict(self.mod.named_modules())
+    
+    def set_header(self):
+        return ['算子名称', 'CPU时间', 'GPU时间', '加速比','参数数据量']
+    
 
     def propagate(self, *args):
         args_iter = iter(args)
         env : Dict[str, Node] = {}
-        csv_str = []
+        csv_con = []
+        headers = self.set_header()
 
         def load_arg(a):
             return torch.fx.graph.map_arg(a, lambda n: env[n.name])
@@ -46,27 +51,34 @@ class ShapeProp:
                 t1 = time.time_ns()
                 result = next(args_iter)
                 t2 = time.time_ns()
+                return result, t1, t2
             elif node.op == 'get_attr':
                 t1 = time.time_ns()
                 result = fetch_attr(node.target)
                 t2 = time.time_ns()
+                return result, t1, t2
             elif node.op == 'call_function':
                 t1 = time.time_ns()
                 result = node.target(*load_arg(node.args), **load_arg(node.kwargs))
                 t2 = time.time_ns()
+                return result, t1, t2
             elif node.op == 'call_method':
                 self_obj, *args = load_arg(node.args)
                 kwargs = load_arg(node.kwargs)
                 t1 = time.time_ns()
                 result = getattr(self_obj, node.target)(*args, **kwargs)
                 t2 = time.time_ns()
+                return result, t1, t2
             elif node.op == 'call_module':
                 t1 = time.time_ns()
                 result = self.modules[node.target](*load_arg(node.args), **load_arg(node.kwargs))
                 t2 = time.time_ns()
-            return result, t1, t2
+                return result, t1, t2
+            return t1, t2
+        
         for node in self.graph.nodes:
-            (result, t1, t2) = execute_node(node)
+            if node.op != 'output':
+                (result, t1, t2) = execute_node(node)
             
 
             # This is the only code specific to shape propagation.
