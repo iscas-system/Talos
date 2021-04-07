@@ -2,6 +2,8 @@ import torch
 import torch.fx
 from torch.fx.node import Node
 import time
+import csv
+import codecs
 
 from typing import Dict
 
@@ -23,6 +25,7 @@ class ShapeProp:
     def propagate(self, *args):
         args_iter = iter(args)
         env : Dict[str, Node] = {}
+        csv_str = []
 
         def load_arg(a):
             return torch.fx.graph.map_arg(a, lambda n: env[n.name])
@@ -35,22 +38,36 @@ class ShapeProp:
                     raise RuntimeError(f"Node referenced nonexistant target {'.'.join(target_atoms[:i])}")
                 attr_itr = getattr(attr_itr, atom)
             return attr_itr
-
-        for node in self.graph.nodes:
+        
+        def execute_node(node):
+            t1 = 0
+            t2 = 0
             if node.op == 'placeholder':
+                t1 = time.time_ns()
                 result = next(args_iter)
+                t2 = time.time_ns()
             elif node.op == 'get_attr':
+                t1 = time.time_ns()
                 result = fetch_attr(node.target)
+                t2 = time.time_ns()
             elif node.op == 'call_function':
-                print(time.time_ns())
+                t1 = time.time_ns()
                 result = node.target(*load_arg(node.args), **load_arg(node.kwargs))
-                print(time.time_ns())
+                t2 = time.time_ns()
             elif node.op == 'call_method':
                 self_obj, *args = load_arg(node.args)
                 kwargs = load_arg(node.kwargs)
+                t1 = time.time_ns()
                 result = getattr(self_obj, node.target)(*args, **kwargs)
+                t2 = time.time_ns()
             elif node.op == 'call_module':
+                t1 = time.time_ns()
                 result = self.modules[node.target](*load_arg(node.args), **load_arg(node.kwargs))
+                t2 = time.time_ns()
+            return result, t1, t2
+        for node in self.graph.nodes:
+            (result, t1, t2) = execute_node(node)
+            
 
             # This is the only code specific to shape propagation.
             # you can delete this `if` branch and this becomes

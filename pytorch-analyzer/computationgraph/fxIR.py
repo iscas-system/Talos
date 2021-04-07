@@ -61,18 +61,18 @@ def transform(m: torch.nn.Module,
     graph : torch.fx.Graph = tracer_class().trace(m)
     # FX represents its Graph as an ordered list of
     # nodes, so we can iterate through them.
-    for node in graph.nodes:
-        # need to avoid recursive errors.
-        if node.op == 'call_module':
-            preNode1 = graph.call_function(timeSpot1,args=node._prev.args)
-            preNode2 = graph.call_function(timeSpot2,args=node._prev.args)
-            # afterNode = graph.call_function(timeSpot)
-            # print("good")
-            # node.append(afterNode)
-            # print(node._next.target)
-            node._prev.prepend(preNode1)
-            node._prev.prepend(preNode2)
-            node._prev.args = (preNode1,preNode2)
+    # for node in graph.nodes:
+    #     # need to avoid recursive errors.
+    #     if node.op == 'call_module':
+    #         preNode1 = graph.call_function(timeSpot1,args=node._prev.args)
+    #         preNode2 = graph.call_function(timeSpot2,args=node._prev.args)
+    #         # afterNode = graph.call_function(timeSpot)
+    #         # print("good")
+    #         # node.append(afterNode)
+    #         # print(node._next.target)
+    #         node._prev.prepend(preNode1)
+    #         node._prev.prepend(preNode2)
+    #         node._prev.args = (preNode1,preNode2)
             
             # node.append(afterNode)
             # The target attribute is the function
@@ -92,18 +92,23 @@ symbolic_traced : torch.fx.GraphModule = torch.fx.symbolic_trace(module)
 # input = torch.randn(3, 4,device="cpu")
 # ret = torch.jit.trace(module,input)
 print(symbolic_traced.graph)
+sp = executiveEngine.ShapeProp(symbolic_traced)
+input2 = torch.randn(3, 4,device="cpu")
+module2 = transform(module)
+output2 = module2.forward(x=input2)
+print("Forward result:")
+print(output2) 
+print("Graph result:")
+print(sp.propagate(input2))
 # for node in symbolic_traced.graph.nodes:
 #     print(node.op)
-print("After add fx graph:\n")
+# print("After add fx graph:\n")
 module2 = transform(module)
-print(module2.graph)
+# print(module2.graph)
 
 # input = torch.randn(3, 4,device="cpu")
 # output = module.forward(x=input)
 # print(output)
-input2 = torch.randn(3, 4,device="cpu")
-output2 = module2.forward(x=input2)
-print(output2)
 
 # with torch.autograd.profiler.profile(use_cuda=False) as prof:
 
@@ -114,6 +119,3 @@ print(output2)
 # print(ret.graph)
 
 # print(symbolic_traced.code)
-
-# sp = executiveEngine.ShapeProp(symbolic_traced) 
-# print(sp.propagate(input2))
