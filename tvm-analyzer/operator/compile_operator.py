@@ -4,7 +4,7 @@ from tvm import te
 import numpy as np
 
 def compile_execute_raw_operator(schedule, variables, target, name="myadd"):
-    fadd = tvm.build(schedules, variables, tgt, name="myadd")
+    fadd = tvm.build(schedules, variables, tgt, name= name)
     dev = tvm.device(target.kind.name, 0)
     if name == "myadd":
         n = 1024
