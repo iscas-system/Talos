@@ -12,19 +12,19 @@ tgt = tvm.target.Target(target="llvm", host="llvm")
 print (tgt.kind.name)
 
 # create schedulue an operator on the target:
-# schedules, variables = create_simple_sum()
+schedules, variables = create_simple_sum()
 
-# # compile the operator
-# operator = compile_execute_raw_operator(schedules, variables, tgt, name="myadd")
+# compile the operator
+operator = compile_execute_raw_operator(schedules, variables, tgt, name="myadd")
 
-# # execute (compare, evaluate) operator by evaluate execution time:
-# evaluate_addition(operator, tgt, "naive", name="myadd")
+# execute (compare, evaluate) operator by evaluate execution time:
+evaluate_addition(operator, tgt, "naive", name="myadd")
 
-# # update schedule:
-# variables = update_by_parallel(variables)
+# update schedule:
+variables = update_by_parallel(variables)
 
-# # recompile
-# operator_parallel = compile_execute_raw_operator(schedules, variables, tgt, name="myadd_parallel")
+# recompile
+operator_parallel = compile_execute_raw_operator(schedules, variables, tgt, name="myadd_parallel")
 
-# # execute
-# evaluate_addition(operator_parallel, tgt, "parallel", name="myadd_parallel")
+# execute
+evaluate_addition(operator_parallel, tgt, "parallel", name="myadd_parallel")
