@@ -24,5 +24,5 @@ create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llv
 
 create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llvm", host="llvm"), optimize_type="vectorization", name="myadd_vectorization", update_schedule_fun = update_by_vectorization_on_cpu, factor = 20)
 
-create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="cuda", host="llvm"), optimize_type="vectorization", name="myadd_gpu_vectorliazaiton", update_schedule_fun = update_by_parallel_gpu, factor = 20)
+create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="cuda", host="llvm"), optimize_type="parallel", name="myadd_cuda_parallel", update_schedule_fun = update_by_parallel_gpu, factor = 64)
 
