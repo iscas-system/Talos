@@ -20,6 +20,7 @@ def create_compile_execute_operator(create_fun, tgt, optimize_type="naive", name
 
 create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llvm", host="llvm"),name="myadd")
 
-create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llvm", host="llvm"), optimize_type="parallel", name="myadd_parallel", update_schedule_fun = update_by_parallel, factor = 8)
+create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llvm", host="llvm"), optimize_type="parallel", name="myadd_parallel", update_schedule_fun = update_by_parallel)
 
-create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llvm", host="llvm"), optimize_type="vectorization", name="myadd_vectorization", update_schedule_fun = update_by_vectorization_on_cpu, factor = 8)
+create_compile_execute_operator(create_simple_sum, tvm.target.Target(target="llvm", host="llvm"), optimize_type="vectorization", name="myadd_vectorization", update_schedule_fun = update_by_vectorization_on_cpu, factor = 20)
+
