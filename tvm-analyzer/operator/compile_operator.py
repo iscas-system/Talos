@@ -14,3 +14,10 @@ def compile_execute_raw_operator(schedules, variables, tgt, name):
         fadd(a, b, c)
         tvm.testing.assert_allclose(c.asnumpy(), a.asnumpy() + b.asnumpy())
     return fadd
+
+def compile_with_autune_log(log_path, schedule, variables, tgt, dtype):
+    with autotvm.apply_history_best("matmul.log"):
+        with tvm.target.Target("llvm"):
+            # s, arg_bufs = matmul(N, L, M, "float32")
+            func = tvm.build(schedule, variables)
+
