@@ -5,6 +5,7 @@ import numpy as np
 import tvm.relay as relay
 import tvm
 from tvm.contrib import graph_executor
+from tvm.contrib.debugger import debug_executor
 # , config={"tir.add_lower_pass": [(1, transform)]}
 def compile_raw_onnx_model(onnx_model, img_data, transform, target="llvm", input_name="data"):
     shape_dict = {input_name: img_data.shape}
