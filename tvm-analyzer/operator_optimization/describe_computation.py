@@ -12,8 +12,8 @@ def create_simple_sum():
     s = te.create_schedule(C.op)
     return s, [A,B,C]
 
-def create_matmul_basic():
-    a = te.placeholder((n, l), name="a", dtype=dtype)
+def create_matmul_basic(N,L,M, dtype):
+    A = te.placeholder((N, L), name="a", dtype=dtype)
     B = te.placeholder((L, M), name="B", dtype=dtype)
     k = te.reduce_axis((0, L), name="k")
     C = te.compute((N, M), lambda i, j: te.sum(A[i, k] * B[k, j], axis=k), name="C")

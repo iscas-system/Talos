@@ -16,8 +16,9 @@ def compile_execute_raw_operator(schedules, variables, tgt, name):
     return fadd
 
 def compile_with_autune_log(log_path, schedule, variables, tgt, dtype):
-    with autotvm.apply_history_best("matmul.log"):
-        with tvm.target.Target("llvm"):
+    with tvm.autotvm.apply_history_best(log_path):
+        with tgt: # tvm.target.Target("llvm")
             # s, arg_bufs = matmul(N, L, M, "float32")
             func = tvm.build(schedule, variables)
+            return func
 
