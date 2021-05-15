@@ -10,7 +10,7 @@ from tvm.contrib.debugger import debug_executor
 def compile_raw_onnx_model(onnx_model, img_data, transform, target="llvm", input_name="data"):
     shape_dict = {input_name: img_data.shape}
     mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
-    with tvm.transform.PassContext(opt_level=3, config={"tir.add_lower_pass": [(1, transform)]}):
+    with tvm.transform.PassContext(opt_level=3):
         lib = relay.build(mod, target=target, params=params)
     dev = tvm.device(str(target), 0)
     module = graph_executor.GraphModule(lib["default"](dev))
@@ -18,7 +18,7 @@ def compile_raw_onnx_model(onnx_model, img_data, transform, target="llvm", input
 
 def compile_tuned_onnx_model(tuning_option, mod, params, transform, target="llvm"):
     with tvm.autotvm.apply_history_best(tuning_option["tuning_records"]):
-        with tvm.transform.PassContext(opt_level=3, config={"tir.add_lower_pass": [(1, transform)]}):
+        with tvm.transform.PassContext(opt_level=3:
             lib = relay.build(mod, target=target, params=params)
     dev = tvm.device(str(target), 0)
     module = graph_executor.GraphModule(lib["default"](dev))

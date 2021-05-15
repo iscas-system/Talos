@@ -9,13 +9,13 @@ from tvm.auto_scheduler import _ffi_api
 from tvm.topi.utils import get_const_tuple
 from tvm.topi.sparse.utils import random_bsr_matrix
 
-@tvm.tir.transform.prim_func_pass(opt_level=3)
-def transform(func, mod, ctx):
-    # my transformations here.
-    print(tvm.tir.analysis.calculate_workspace_bytes(func))
-    print(type(mod))
-    print(type(ctx))
-    return func
+# @tvm.tir.transform.prim_func_pass(opt_level=3)
+# def transform(func, mod, ctx):
+#     # my transformations here.
+#     print(tvm.tir.analysis.calculate_workspace_bytes(func))
+#     print(type(mod))
+#     print(type(ctx))
+#     return func
 
 
 # read onnx model from github
@@ -24,7 +24,7 @@ onnx_model = read_onnx_modle()
 img_data = get_single_image()
 # compile and execute onnx_model
 raw_module,params,target,mod = compile_raw_onnx_model(onnx_model,img_data, transform)
-# unoptimized = raw_execute_model(raw_module, img_data)
+unoptimized = raw_execute_model(raw_module, img_data)
 
 # tune onnx_model with xgb
 # tuning_option = xgb_tune_module(target, params, mod)
