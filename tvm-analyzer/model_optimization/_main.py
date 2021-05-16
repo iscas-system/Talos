@@ -8,6 +8,7 @@ from tvm import te, auto_scheduler, runtime, topi
 from tvm.auto_scheduler import _ffi_api
 from tvm.topi.utils import get_const_tuple
 from tvm.topi.sparse.utils import random_bsr_matrix
+from memory_profiler import memory_usage
 
 @tvm.tir.transform.prim_func_pass(opt_level=3)
 def transform(func, mod, ctx):
@@ -24,7 +25,12 @@ onnx_model = read_onnx_modle()
 img_data = get_single_image()
 # compile and execute onnx_model
 raw_module,params,target,mod = compile_raw_onnx_model(onnx_model,img_data, transform)
-unoptimized = raw_execute_model(raw_module, img_data)
+
+def myfunc(raw_module, img_data):
+    unoptimized = raw_execute_model(raw_module, img_data)
+    return unoptimized
+
+print(max(memory_usage((myfunc,(raw_module,img_data)))))
 
 # tune onnx_model with xgb
 # tuning_option = xgb_tune_module(target, params, mod)
