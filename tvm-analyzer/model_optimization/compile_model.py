@@ -7,10 +7,10 @@ import tvm
 from tvm.contrib import graph_executor
 from tvm.contrib.debugger import debug_executor
 # , config={"tir.add_lower_pass": [(1, transform)]}
-def compile_raw_onnx_model(onnx_model, img_data, transform, target="llvm", input_name="data"):
+def compile_raw_onnx_model(onnx_model, img_data, target="llvm", input_name="data"):
     shape_dict = {input_name: img_data.shape}
     mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
-    with tvm.transform.PassContext(opt_level=3):
+    with tvm.transform.PassContext(opt_level=0):
         lib = relay.build(mod, target=target, params=params)
     dev = tvm.device(str(target), 0)
     module = graph_executor.GraphModule(lib["default"](dev))

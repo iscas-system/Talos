@@ -10,13 +10,13 @@ from tvm.topi.utils import get_const_tuple
 from tvm.topi.sparse.utils import random_bsr_matrix
 from memory_profiler import memory_usage
 
-@tvm.tir.transform.prim_func_pass(opt_level=3)
-def transform(func, mod, ctx):
-    # my transformations here.
-    print(tvm.tir.analysis.calculate_workspace_bytes(func))
-    print(type(mod))
-    print(type(ctx))
-    return func
+# @tvm.tir.transform.prim_func_pass(opt_level=3)
+# def transform(func, mod, ctx):
+#     # my transformations here.
+#     print(tvm.tir.analysis.calculate_workspace_bytes(func))
+#     print(type(mod))
+#     print(type(ctx))
+#     return func
 
 
 # read onnx model from github
@@ -24,7 +24,7 @@ onnx_model = read_onnx_modle()
 # load image for network
 img_data = get_single_image()
 # compile and execute onnx_model
-raw_module,params,target,mod = compile_raw_onnx_model(onnx_model,img_data, transform)
+raw_module,params,target,mod = compile_raw_onnx_model(onnx_model,img_data)
 
 def myfunc(raw_module, img_data):
     unoptimized = raw_execute_model(raw_module, img_data)

@@ -90,19 +90,17 @@ target = "llvm"
 input_name = "1"
 shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
-# get graph mainly from here.
-print(mod.functions.items()[0][1].body.args)
 
-# with tvm.transform.PassContext(opt_level=1):
-#     intrp = relay.build_module.create_executor("graph", mod, tvm.cpu(0), target)
+with tvm.transform.PassContext(opt_level=1):
+    intrp = relay.build_module.create_executor("graph", mod, tvm.cpu(0), target)
 
-# ######################################################################
-# # Execute on TVM
-# # ---------------------------------------------
-# dtype = "float32"
-# tvm_output = intrp.evaluate()(tvm.nd.array(x.astype(dtype)), **params)
-# func = relay.Function(relay.analysis.free_vars(tvm_output), tvm_output)
-# print("before pass: ", func)
+######################################################################
+# Execute on TVM
+# ---------------------------------------------
+dtype = "float32"
+tvm_output = intrp.evaluate()(tvm.nd.array(x.astype(dtype)), **params).asnumpy()
+
+print(tvm_output)
 
 ######################################################################
 # Display results
