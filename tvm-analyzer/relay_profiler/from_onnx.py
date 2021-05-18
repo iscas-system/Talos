@@ -41,6 +41,7 @@ from tvm.contrib.download import download_testdata
 from memory_profiler import memory_usage
 from tvm.relay.testing import check_grad, run_infer_type
 from tvm.relay.transform import gradient
+from ir_module_traverser import profile_relay_operator
 
 ######################################################################
 # Load pretrained ONNX model
@@ -94,6 +95,8 @@ input_name = "1"
 shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 
+profile_relay_operator(mod, params,0)
+
 # 基础组件是module，里面包含函数和参数、参数类型
 # print(mod)
 # print(dir(mod))
@@ -101,9 +104,7 @@ mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 # print(mod.get_global_vars()[0])
 # print(len(mod.get_global_type_vars()))
 # 查看所有function的结构,一个模型只有一个function作为入口,一般没有全局变量：
-entrance_tuple = mod.functions.items()[0]
-global_var = entrance_tuple[0]
-main_function = entrance_tuple[1]
+
 # 查看所有的输入参数，通过命名方式决定对应的测试数据和模型参数（对应可变状态）：
 # print(main_function.params)
 # # 查看function的主体,作为根部节点：
@@ -117,96 +118,96 @@ main_function = entrance_tuple[1]
 # print(main_function.body.op)
 # # 自己的属性：
 # print(main_function.body.attrs['newshape'])
-for k,v in mod.functions.items():
-    print(type(k))
-    print(v)
+# for k,v in mod.functions.items():
+#     print(type(k))
+#     print(v)
 
 # 尝试截断最后一个算子的参数，重新编译运行，测量时间和内存开销：
-temp_x = np.random.rand(672,672,1,1)
-temp_params_map = {}
-temp_tvm_var = tvm.relay.var("1",shape=temp_x.shape)
-# temp_params_map['1'] = temp_tvm_var
-temp_params_list = []
-temp_params_list.append(temp_tvm_var)
-temp_body = tvm.relay.Call(main_function.body.op,temp_params_list,attrs=main_function.body.attrs)
-temp_function = tvm.relay.Function(temp_params_list, temp_body)
-# print(temp_function)
-temp_functions = {"GlobalVar": None, "main": temp_function}
-temp_ir_module = tvm.ir.IRModule(functions=temp_functions)
+# temp_x = np.random.rand(672,672,1,1)
+# temp_params_map = {}
+# temp_tvm_var = tvm.relay.var("1",shape=temp_x.shape)
+# # temp_params_map['1'] = temp_tvm_var
+# temp_params_list = []
+# temp_params_list.append(temp_tvm_var)
+# temp_body = tvm.relay.Call(main_function.body.op,temp_params_list,attrs=main_function.body.attrs)
+# temp_function = tvm.relay.Function(temp_params_list, temp_body)
+# # print(temp_function)
+# temp_functions = {"GlobalVar": None, "main": temp_function}
+# temp_ir_module = tvm.ir.IRModule(functions=temp_functions)
 # print(temp_ir_module)
 
 # print(temp_params_map)
 
-with tvm.transform.PassContext(opt_level=1):
-    intrp = relay.build_module.create_executor("graph", temp_ir_module, tvm.cpu(0), target)
+# with tvm.transform.PassContext(opt_level=1):
+#     intrp = relay.build_module.create_executor("graph", temp_ir_module, tvm.cpu(0), target)
 ######################################################################
 # Execute on TVM
 # ---------------------------------------------
 
-def start_profile():
-    return
+# def start_profile():
+#     return
 
-print(memory_usage(proc=start_profile))
-print("zero ir")
+# print(memory_usage(proc=start_profile))
+# print("zero ir")
 
-dtype = "float32"
-print(type(intrp))
-def myfunc():
-    # may consume too many memory.
-    tvm_output = intrp.evaluate()(tvm.nd.array(temp_x.astype(dtype)), **temp_params_map).asnumpy()
-    print(tvm_output)
+# dtype = "float32"
+# print(type(intrp))
+# def myfunc():
+#     # may consume too many memory.
+#     tvm_output = intrp.evaluate()(tvm.nd.array(temp_x.astype(dtype)), **temp_params_map).asnumpy()
+#     print(tvm_output)
 
-# myfunc()
-print(memory_usage(proc=myfunc))
-print("first ir")
+# # myfunc()
+# print(memory_usage(proc=myfunc))
+# print("first ir")
 
 # determine base:
-dshape = (1,)
-base_input_x = np.random.rand(1)
-base_x = tvm.relay.var("x", shape = dshape)
-base_x = relay.add(base_x, relay.const(1, "float32"))
-base_function = tvm.relay.Function(relay.analysis.free_vars(base_x), base_x)
-base_functions = {"GlobalVar": None, "main": base_function}
-base_ir_module = tvm.ir.IRModule(functions=base_functions)
+# dshape = (1,)
+# base_input_x = np.random.rand(1)
+# base_x = tvm.relay.var("x", shape = dshape)
+# base_x = relay.add(base_x, relay.const(1, "float32"))
+# base_function = tvm.relay.Function(relay.analysis.free_vars(base_x), base_x)
+# base_functions = {"GlobalVar": None, "main": base_function}
+# base_ir_module = tvm.ir.IRModule(functions=base_functions)
 # print(base_ir_module)
 
-with tvm.transform.PassContext(opt_level=1):
-    base_intrp = relay.build_module.create_executor("graph", base_ir_module, tvm.cpu(0), target)
+# with tvm.transform.PassContext(opt_level=1):
+#     base_intrp = relay.build_module.create_executor("graph", base_ir_module, tvm.cpu(0), target)
 
-def myfunc_base():
-    # may consume too many memory.
-    tvm_output_base = base_intrp.evaluate()(tvm.nd.array(base_input_x.astype(dtype)), **temp_params_map).asnumpy()
-    print(tvm_output_base)
+# def myfunc_base():
+#     # may consume too many memory.
+#     tvm_output_base = base_intrp.evaluate()(tvm.nd.array(base_input_x.astype(dtype)), **temp_params_map).asnumpy()
+#     print(tvm_output_base)
 
-# myfunc()
-print(memory_usage(proc=myfunc_base))
-print("second ir")
+# # myfunc()
+# print(memory_usage(proc=myfunc_base))
+# print("second ir")
 
 # get gradient:
-dshape = (2,2)
-sigmoid_input_x = np.random.rand(2,2).astype("float32")
-sigmoid_x = tvm.relay.var("input", shape = dshape)
-sigmoid_output = tvm.relay.sigmoid(sigmoid_x)
-sigmoid_function = tvm.relay.Function([sigmoid_x],sigmoid_output)
-sigmoid_function = run_infer_type(sigmoid_function)
-bwd_func = run_infer_type(gradient(sigmoid_function))
+# dshape = (2,2)
+# sigmoid_input_x = np.random.rand(2,2).astype("float32")
+# sigmoid_x = tvm.relay.var("input", shape = dshape)
+# sigmoid_output = tvm.relay.sigmoid(sigmoid_x)
+# sigmoid_function = tvm.relay.Function([sigmoid_x],sigmoid_output)
+# sigmoid_function = run_infer_type(sigmoid_function)
+# bwd_func = run_infer_type(gradient(sigmoid_function))
 
 # print("bwd_func)")
 # print(bwd_func)
 
-tvm_output_grad = tvm.relay.create_executor(
-    mod=tvm.IRModule.from_expr(sigmoid_function),device = tvm.cpu(0), target = target
-).evaluate()(tvm.nd.array(sigmoid_input_x.astype(dtype)), **temp_params_map).asnumpy()
+# tvm_output_grad = tvm.relay.create_executor(
+#     mod=tvm.IRModule.from_expr(sigmoid_function),device = tvm.cpu(0), target = target
+# ).evaluate()(tvm.nd.array(sigmoid_input_x.astype(dtype)), **temp_params_map).asnumpy()
 
-print("output_grad")
-print(tvm_output_grad)
+# print("output_grad")
+# print(tvm_output_grad)
 
-intrp = relay.create_executor(device = tvm.cpu(0), target = target)
-op_res, (op_grad, ) = intrp.evaluate(bwd_func)(sigmoid_input_x)
+# intrp = relay.create_executor(device = tvm.cpu(0), target = target)
+# op_res, (op_grad, ) = intrp.evaluate(bwd_func)(sigmoid_input_x)
 
-print("output_grad2")
-print(op_res)
-print(op_grad)
+# print("output_grad2")
+# print(op_res)
+# print(op_grad)
 # sigmoid_functions = {"GlobalVar": None, "main": sigmoid_function}
 # sigmoid_ir_module = tvm.ir.IRModule(functions=sigmoid_functions)
 # sigmoid_ir_module = tvm.relay.transform.InferType()(sigmoid_ir_module)
