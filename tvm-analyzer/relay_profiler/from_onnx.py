@@ -39,6 +39,8 @@ from tvm import te
 import tvm.relay as relay
 from tvm.contrib.download import download_testdata
 from memory_profiler import memory_usage
+from tvm.relay.testing import check_grad, run_infer_type
+from tvm.relay.transform import gradient
 
 ######################################################################
 # Load pretrained ONNX model
@@ -93,28 +95,28 @@ shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 
 # 基础组件是module，里面包含函数和参数、参数类型
-print(mod)
-print(dir(mod))
-# print(mod.type_definitions)
-print(mod.get_global_vars()[0])
-print(len(mod.get_global_type_vars()))
+# print(mod)
+# print(dir(mod))
+# # print(mod.type_definitions)
+# print(mod.get_global_vars()[0])
+# print(len(mod.get_global_type_vars()))
 # 查看所有function的结构,一个模型只有一个function作为入口,一般没有全局变量：
 entrance_tuple = mod.functions.items()[0]
 global_var = entrance_tuple[0]
 main_function = entrance_tuple[1]
 # 查看所有的输入参数，通过命名方式决定对应的测试数据和模型参数（对应可变状态）：
-print(main_function.params)
-# 查看function的主体,作为根部节点：
-print(type(main_function.body))
-print(main_function.body)
-# 遍历节点（call Node的数据结构）：
-print("elements in call Node:")
-# 依赖的自身输入参数结果（倒序树）：
-print(main_function.body.args)
-# 自己的算子操作名称：
-print(main_function.body.op)
-# 自己的属性：
-print(main_function.body.attrs['newshape'])
+# print(main_function.params)
+# # 查看function的主体,作为根部节点：
+# print(type(main_function.body))
+# print(main_function.body)
+# # 遍历节点（call Node的数据结构）：
+# print("elements in call Node:")
+# # 依赖的自身输入参数结果（倒序树）：
+# print(main_function.body.args)
+# # 自己的算子操作名称：
+# print(main_function.body.op)
+# # 自己的属性：
+# print(main_function.body.attrs['newshape'])
 for k,v in mod.functions.items():
     print(type(k))
     print(v)
@@ -128,12 +130,12 @@ temp_params_list = []
 temp_params_list.append(temp_tvm_var)
 temp_body = tvm.relay.Call(main_function.body.op,temp_params_list,attrs=main_function.body.attrs)
 temp_function = tvm.relay.Function(temp_params_list, temp_body)
-print(temp_function)
+# print(temp_function)
 temp_functions = {"GlobalVar": None, "main": temp_function}
 temp_ir_module = tvm.ir.IRModule(functions=temp_functions)
-print(temp_ir_module)
+# print(temp_ir_module)
 
-print(temp_params_map)
+# print(temp_params_map)
 
 with tvm.transform.PassContext(opt_level=1):
     intrp = relay.build_module.create_executor("graph", temp_ir_module, tvm.cpu(0), target)
@@ -166,7 +168,7 @@ base_x = relay.add(base_x, relay.const(1, "float32"))
 base_function = tvm.relay.Function(relay.analysis.free_vars(base_x), base_x)
 base_functions = {"GlobalVar": None, "main": base_function}
 base_ir_module = tvm.ir.IRModule(functions=base_functions)
-print(base_ir_module)
+# print(base_ir_module)
 
 with tvm.transform.PassContext(opt_level=1):
     base_intrp = relay.build_module.create_executor("graph", base_ir_module, tvm.cpu(0), target)
@@ -179,6 +181,43 @@ def myfunc_base():
 # myfunc()
 print(memory_usage(proc=myfunc_base))
 print("second ir")
+
+# get gradient:
+dshape = (2,2)
+sigmoid_input_x = np.random.rand(2,2).astype("float32")
+sigmoid_x = tvm.relay.var("input", shape = dshape)
+sigmoid_output = tvm.relay.sigmoid(sigmoid_x)
+sigmoid_function = tvm.relay.Function([sigmoid_x],sigmoid_output)
+sigmoid_function = run_infer_type(sigmoid_function)
+bwd_func = run_infer_type(gradient(sigmoid_function))
+
+# print("bwd_func)")
+# print(bwd_func)
+
+tvm_output_grad = tvm.relay.create_executor(
+    mod=tvm.IRModule.from_expr(sigmoid_function),device = tvm.cpu(0), target = target
+).evaluate()(tvm.nd.array(sigmoid_input_x.astype(dtype)), **temp_params_map).asnumpy()
+
+print("output_grad")
+print(tvm_output_grad)
+
+intrp = relay.create_executor(device = tvm.cpu(0), target = target)
+op_res, (op_grad, ) = intrp.evaluate(bwd_func)(sigmoid_input_x)
+
+print("output_grad2")
+print(op_res)
+print(op_grad)
+# sigmoid_functions = {"GlobalVar": None, "main": sigmoid_function}
+# sigmoid_ir_module = tvm.ir.IRModule(functions=sigmoid_functions)
+# sigmoid_ir_module = tvm.relay.transform.InferType()(sigmoid_ir_module)
+
+# sigmoid_ir_module['main'] = relay.transform.gradient(sigmoid_ir_module['main'],  mod=sigmoid_ir_module, mode='higher_order')
+# sigmoid_ir_module = relay.transform.InferType()(sigmoid_ir_module)
+
+# e = tvm.relay.create_executor("graph", sigmoid_ir_module, tvm.cpu(0), target).evaluate()
+# with tvm.transform.PassContext(opt_level=1):
+#     grad_intrp = relay.build_module.create_executor("graph", sigmoid_ir_module, tvm.cpu(0), target)
+
 ######################################################################
 # Display results
 # ---------------------------------------------
