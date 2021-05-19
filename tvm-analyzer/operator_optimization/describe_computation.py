@@ -3,7 +3,6 @@ import tvm.testing
 from tvm import te
 import numpy as np
 
-
 def create_simple_sum():
     n = te.var("n")
     A = te.placeholder((n,), name="A")
