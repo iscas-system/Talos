@@ -31,9 +31,10 @@ def print_tree(i, op_name):
     str+="\n"
 
 def recursive_traverse_op(name, attrs, args):
-    print(name,attrs)
+    # print(name,attrs)
     for each_arg in args:
         if isinstance(each_arg, tvm.relay.expr.Call):
             recursive_traverse_op(each_arg.op, each_arg.attrs, each_arg.args)
         if isinstance(each_arg,tvm.relay.expr.Var):
-            print("param Node:",each_arg)
+            # print("param Node:",each_arg)
+            
