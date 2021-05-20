@@ -41,7 +41,7 @@ from tvm.contrib.download import download_testdata
 from memory_profiler import memory_usage
 from tvm.relay.testing import check_grad, run_infer_type
 from tvm.relay.transform import gradient
-from ir_module_traverser import profile_relay_operator
+from ir_module_traverser import construct_op_graph
 
 ######################################################################
 # Load pretrained ONNX model
@@ -95,7 +95,7 @@ input_name = "1"
 shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 
-profile_relay_operator(mod, params,0)
+construct_op_graph(mod, params)
 
 # 基础组件是module，里面包含函数和参数、参数类型
 # print(mod)
