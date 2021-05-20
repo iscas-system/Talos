@@ -5,6 +5,8 @@ from tvm import te
 import tvm.relay as relay
 from tvm.contrib.download import download_testdata
 from memory_profiler import memory_usage
+from tvm.relay.testing import check_grad, run_infer_type
+from tvm.relay.transform import gradient
 
 class op_graph:
     def __init__(self):
@@ -51,7 +53,9 @@ class op_graph:
         print("Total start call node with ops:", len(start_call_nodes))
         for start_op in start_call_nodes:
             start_op.print_self()
-        profile_forward_relay_operator(start_call_nodes[0], ir_params, x)
+        fw_m = profile_forward_relay_operator(start_call_nodes[0], ir_params, x)
+        bw_m = profile_backward_relay_operator(start_call_nodes[0], ir_params, x)
+        print("bw_m-fw_m", bw_m-fw_m)
 
 class op_node:
     # args_index:{id,}
@@ -115,6 +119,10 @@ def recursive_traverse_op(attrs, args, temp_op=None):
     computation_graph.insert_op(next_op_node)
     return next_op_node
 
+def op_point():
+    print("start op point")
+    return
+
 def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
     if ready_op_node.type == "var":
         return
@@ -127,6 +135,31 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
         call_interpreter = relay.build_module.create_executor("graph", call_ir_module, tvm.cpu(0), "llvm")
     print(ir_params)
     call_intput_args = []
-    call_intput_args.append(tvm.nd.array(x.astype(dtype))) 
-    tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params).asnumpy()
-    print(tvm_output)
+    call_intput_args.append(tvm.nd.array(x.astype(dtype)))
+    start_memory = max(memory_usage(op_point))
+    def op_forward():
+        tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params).asnumpy()
+        # print(tvm_output)
+    end_memory = max(memory_usage(op_forward))
+    print(end_memory - start_memory)
+    return end_memory - start_memory
+
+def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
+    if ready_op_node.type == "var":
+        return
+    call_body = ready_op_node.op_instance
+    call_function = tvm.relay.Function(ready_op_node.op_instance.args, call_body)
+    call_function = run_infer_type(call_function)
+    bwd_func = run_infer_type(gradient(call_function))
+    # compile in a different way:
+    call_interpreter = relay.create_executor(device = tvm.cpu(0), target = "llvm")
+    # prepare to run
+    call_intput_args = []
+    call_intput_args.append(tvm.nd.array(x.astype(dtype)))
+    start_memory = max(memory_usage(op_point))
+    def op_forward():
+        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
+        # print(tvm_output)
+    end_memory = max(memory_usage(op_forward))
+    print(end_memory - start_memory)
+    return end_memory - start_memory
