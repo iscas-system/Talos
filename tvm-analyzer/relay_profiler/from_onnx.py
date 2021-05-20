@@ -95,7 +95,7 @@ input_name = "1"
 shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 
-construct_op_graph(mod, params)
+construct_op_graph(mod, params, x)
 
 # 基础组件是module，里面包含函数和参数、参数类型
 # print(mod)
@@ -137,9 +137,6 @@ construct_op_graph(mod, params)
 # print(temp_ir_module)
 
 # print(temp_params_map)
-
-# with tvm.transform.PassContext(opt_level=1):
-#     intrp = relay.build_module.create_executor("graph", temp_ir_module, tvm.cpu(0), target)
 ######################################################################
 # Execute on TVM
 # ---------------------------------------------

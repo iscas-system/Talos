@@ -13,13 +13,12 @@ class op_graph:
         self.call_nodes = []
     
     def insert_op(self, current_op_node):
-        if self.find_if_exist(current_op_node) != None:
-            return
-        self.dictionary[current_op_node.id] = current_op_node
-        if current_op_node.type == "call":
-            self.call_nodes.append(current_op_node)
-        if current_op_node.type == "var":
-            self.var_nodes.append(current_op_node)
+        if self.find_if_exist(current_op_node) == None:
+            self.dictionary[current_op_node.id] = current_op_node
+            if current_op_node.type == "call":
+                self.call_nodes.append(current_op_node)
+            if current_op_node.type == "var":
+                self.var_nodes.append(current_op_node)
     
     def find_starting_ops(self):
         result = []
@@ -33,15 +32,26 @@ class op_graph:
                 result.append(temp_op)
         return result
 
-    def find_if_exist(self, temp_op):
+    def find_if_exist(self, current_op_node):
         for key in self.dictionary.keys():
-            if self.dictionary[key].op_instance is temp_op:
+            if key == current_op_node.id:
                 return self.dictionary[key]
         return None
 
-    def print_self(self):
-        for start_op in self.find_starting_ops():
+    def find_if_var(self, var_op):
+        for temp in self.var_nodes:
+            if temp.op_instance == var_op:
+                # print("find same params")
+                return temp
+        return None
+
+    def print_graph(self, ir_params, x):
+        # verify is there any replication.
+        start_call_nodes = self.find_starting_ops()
+        print("Total start call node with ops:", len(start_call_nodes))
+        for start_op in start_call_nodes:
             start_op.print_self()
+        profile_forward_relay_operator(start_call_nodes[0], ir_params, x)
 
 class op_node:
     # args_index:{id,}
@@ -69,7 +79,7 @@ class op_node:
 op_index = 0
 computation_graph = op_graph()
 
-def construct_op_graph(ir_module, ir_params):
+def construct_op_graph(ir_module, ir_params, x):
     global op_index, computation_graph
     print("current entrance function length:", len(ir_module.functions.items()))
     print(ir_module)
@@ -81,9 +91,8 @@ def construct_op_graph(ir_module, ir_params):
         computation_graph.insert_op(temp_op_node)
         op_index+=1
     recursive_traverse_op(main_function.body.attrs, main_function.body.args, temp_op=main_function.body)
-
-    computation_graph.print_self()
-
+    # verify whether the graph is right
+    computation_graph.print_graph(ir_params, x)
 
 def recursive_traverse_op(attrs, args, temp_op=None):
     global op_index, computation_graph
@@ -95,10 +104,9 @@ def recursive_traverse_op(attrs, args, temp_op=None):
         if isinstance(each_arg, tvm.relay.expr.Call):
             current_node_op = recursive_traverse_op(each_arg.attrs, each_arg.args, temp_op = each_arg)
             current_node_op.set_next(next_op_node, op_index-1, args_index)
-            computation_graph.insert_op(current_node_op)
             args_index+=1
         if isinstance(each_arg,tvm.relay.expr.Var):
-            current_node_op = computation_graph.find_if_exist(each_arg)
+            current_node_op = computation_graph.find_if_var(each_arg)
             if current_node_op == None:
                 current_node_op = op_node("var", op_index, each_arg, attrs = None)
             current_node_op.set_next(next_op_node, op_index-1, args_index)
@@ -107,5 +115,18 @@ def recursive_traverse_op(attrs, args, temp_op=None):
     computation_graph.insert_op(next_op_node)
     return next_op_node
 
-def profile_relay_operator():
-    return 
+def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
+    if ready_op_node.type == "var":
+        return
+    call_body = ready_op_node.op_instance
+    call_function = tvm.relay.Function(ready_op_node.op_instance.args, call_body)
+    call_functions = {"GlobalVar": None, "main": call_function}
+    call_ir_module = tvm.ir.IRModule(functions=call_functions)
+    print(call_ir_module)
+    with tvm.transform.PassContext(opt_level=1):
+        call_interpreter = relay.build_module.create_executor("graph", call_ir_module, tvm.cpu(0), "llvm")
+    print(ir_params)
+    call_intput_args = []
+    call_intput_args.append(tvm.nd.array(x.astype(dtype))) 
+    tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params).asnumpy()
+    print(tvm_output)
