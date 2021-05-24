@@ -56,6 +56,25 @@ class op_graph:
         fw_m = profile_forward_relay_operator(start_call_nodes[0], ir_params, x)
         bw_m = profile_backward_relay_operator(start_call_nodes[0], ir_params, x)
         print("bw_m-fw_m", bw_m-fw_m)
+    
+    def check_op_ready(self, temp_op):
+        for key in temp_op.prior.keys():
+            if temp_op.prior[key][1].type == "call":
+                if temp_op.prior[key][1].performance_data["fw_value"] is None:
+                    return False
+        return True
+    
+    def traverse_and_calculate_per_op(self, ir_params, x, fw=True, bw=False):
+        available_op_queue = self.find_starting_ops()
+        while (len(available_op_queue)) >0 :
+            temp_op = available_op_queue.pop(0)
+            if fw:
+                profile_forward_relay_operator(temp_op, ir_params, x)
+            if bw:
+                bw_m = profile_backward_relay_operator(temp, ir_params, x)
+            for key in temp_op.next.keys():
+                if self.check_op_ready(temp_op.next[key][1]):
+                    available_op_queue.append(temp_op.next[key][1])
 
 class op_node:
     # args_index:{id,}
