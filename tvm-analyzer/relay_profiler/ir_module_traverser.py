@@ -66,7 +66,7 @@ class op_graph:
     
     def traverse_and_calculate_per_op(self, ir_params, x, fw=True, bw=False):
         available_op_queue = self.find_starting_ops()
-        while (len(available_op_queue)) >0 :
+        while len(available_op_queue) >0 :
             temp_op = available_op_queue.pop(0)
             if fw:
                 profile_forward_relay_operator(temp_op, ir_params, x)
@@ -142,6 +142,25 @@ def op_point():
     print("start op point")
     return
 
+def get_op_args(ready_op_node, dtype):
+    intermeidiate_args = []
+    args_index = 0
+    pick_one = True
+    max_index = 0
+    for key in ready_op_node.prior.keys:
+        if max_index < ready_op_node.prior.keys[0]:
+            max_index = ready_op_node.prior.keys[0]
+    while args_index <= max_index:
+        for key in ready_op_node.prior.keys:
+            if ready_op_node.prior.keys[0] == args_index:
+                if ready_op_node.prior.keys[1].type == "call":
+                    intermeidiate_args.append(tvm.nd.array(ready_op_node.prior.keys[1].performance_data["fw_value"].astype(dtype)))
+                if ready_op_node.prior.keys[1].type == "var":
+                    intermeidiate_args.append(
+                        tvm.nd.array(ready_op_node.prior.keys[1].op_instance.astype(dtype)))
+                args_index+=1
+    return intermeidiate_args
+
 def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
     if ready_op_node.type == "var":
         return
@@ -155,6 +174,7 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
     print(ir_params)
     call_intput_args = []
     call_intput_args.append(tvm.nd.array(x.astype(dtype)))
+    call_intput_args = call_intput_args + get_op_args(ready_op_node, dtype)
     start_memory = max(memory_usage(op_point))
     def op_forward():
         tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params).asnumpy()
@@ -175,9 +195,10 @@ def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"
     # prepare to run
     call_intput_args = []
     call_intput_args.append(tvm.nd.array(x.astype(dtype)))
+    call_intput_args = call_intput_args + get_op_args(ready_op_node, dtype)
     start_memory = max(memory_usage(op_point))
     def op_forward():
-        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
+        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params).asnumpy()
         # print(tvm_output)
     end_memory = max(memory_usage(op_forward))
     print(end_memory - start_memory)
