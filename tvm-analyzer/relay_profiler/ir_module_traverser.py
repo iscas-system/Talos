@@ -178,9 +178,11 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
     start_memory = max(memory_usage(op_point))
     def op_forward():
         tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params).asnumpy()
+        ready_op_node.performance_data["fw_value"] = tvm_output
         # print(tvm_output)
-    end_memory = max(memory_usage(op_forward))
+     end_memory = max(memory_usage(op_forward))
     print(end_memory - start_memory)
+    ready_op_node.performance_data["fw_memory"] = end_memory - start_memory
     return end_memory - start_memory
 
 def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
@@ -200,6 +202,8 @@ def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"
     def op_forward():
         op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params).asnumpy()
         # print(tvm_output)
+        ready_op_node.performance_data["bw_value"] = op_res
     end_memory = max(memory_usage(op_forward))
     print(end_memory - start_memory)
+    ready_op_node.performance_data["bw_memory"] = end_memory - start_memory
     return end_memory - start_memory
