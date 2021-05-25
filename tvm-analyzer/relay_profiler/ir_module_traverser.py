@@ -53,20 +53,20 @@ class op_graph:
         print("Total start call node with ops:", len(start_call_nodes))
         for start_op in start_call_nodes:
             start_op.print_self()
-        fw_m = profile_forward_relay_operator(start_call_nodes[0], ir_params, x)
-        bw_m = profile_backward_relay_operator(start_call_nodes[0], ir_params, x)
-        print("bw_m-fw_m", bw_m-fw_m)
+        # fw_m = profile_forward_relay_operator(start_call_nodes[0], ir_params, x)
+        # bw_m = profile_backward_relay_operator(start_call_nodes[0], ir_params, x)
+        # print("bw_m-fw_m", bw_m-fw_m)
     
     def check_op_ready(self, temp_op):
         for key in temp_op.prior.keys():
             if temp_op.prior[key][1].type == "call":
-                if temp_op.prior[key][1].performance_data["fw_value"] is None:
+                if "fw_value" not in temp_op.prior[key][1].performance_data.keys():
                     return False
         return True
     
     def traverse_and_calculate_per_op(self, ir_params, x, fw=True, bw=False):
         available_op_queue = self.find_starting_ops()
-        while len(available_op_queue) >0 :
+        while len(available_op_queue) > 0 :
             temp_op = available_op_queue.pop(0)
             if fw:
                 profile_forward_relay_operator(temp_op, ir_params, x)
@@ -115,7 +115,11 @@ def construct_op_graph(ir_module, ir_params, x):
         op_index+=1
     recursive_traverse_op(main_function.body.attrs, main_function.body.args, temp_op=main_function.body)
     # verify whether the graph is right
-    computation_graph.print_graph(ir_params, x)
+    # computation_graph.print_graph(ir_params, x)
+
+def profile_memory(ir_params, x):
+    computation_graph.traverse_and_calculate_per_op( ir_params, x)
+
 
 def recursive_traverse_op(attrs, args, temp_op=None):
     global op_index, computation_graph

@@ -8,7 +8,7 @@ from tvm.contrib.download import download_testdata
 from memory_profiler import memory_usage
 from tvm.relay.testing import check_grad, run_infer_type
 from tvm.relay.transform import gradient
-from ir_module_traverser import construct_op_graph
+from ir_module_traverser import construct_op_graph, profile_memory
 
 model_url = "".join(
     [
@@ -37,6 +37,7 @@ shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 
 construct_op_graph(mod, params, x)
+profile_memory(params, x)
 
 # 基础组件是module，里面包含函数和参数、参数类型
 # print(mod)
