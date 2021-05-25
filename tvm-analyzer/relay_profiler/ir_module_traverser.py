@@ -147,17 +147,19 @@ def get_op_args(ready_op_node, dtype):
     args_index = 0
     pick_one = True
     max_index = 0
-    for key in ready_op_node.prior.keys:
-        if max_index < ready_op_node.prior.keys[0]:
-            max_index = ready_op_node.prior.keys[0]
+    for key in ready_op_node.prior.keys():
+        if max_index < ready_op_node.prior[key][0]:
+            max_index = ready_op_node.prior[key][0]
     while args_index <= max_index:
-        for key in ready_op_node.prior.keys:
-            if ready_op_node.prior.keys[0] == args_index:
-                if ready_op_node.prior.keys[1].type == "call":
-                    intermeidiate_args.append(tvm.nd.array(ready_op_node.prior.keys[1].performance_data["fw_value"].astype(dtype)))
-                if ready_op_node.prior.keys[1].type == "var":
-                    intermeidiate_args.append(
-                        tvm.nd.array(ready_op_node.prior.keys[1].op_instance.astype(dtype)))
+        for key in ready_op_node.prior.keys():
+            if ready_op_node.prior[key][0] == args_index:
+                if ready_op_node.prior[key][1].type == "call":
+                    intermeidiate_args.append(tvm.nd.array(ready_op_node.prior[key][1].performance_data["fw_value"].astype(dtype)))
+                if ready_op_node.prior[key][1].type == "var":
+                    # do not need to reinsert
+                    # intermeidiate_args.append(
+                    #     ready_op_node.prior[key][1].op_instance)
+                    print(ready_op_node.prior[key][1].op_instance)
                 args_index+=1
     return intermeidiate_args
 
@@ -177,10 +179,11 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
     call_intput_args = call_intput_args + get_op_args(ready_op_node, dtype)
     start_memory = max(memory_usage(op_point))
     def op_forward():
-        tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params).asnumpy()
-        ready_op_node.performance_data["fw_value"] = tvm_output
+        tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params)
+        print(tvm_output)
+        ready_op_node.performance_data["fw_value"] = tvm_output.asnumpy()
         # print(tvm_output)
-     end_memory = max(memory_usage(op_forward))
+    end_memory = max(memory_usage(op_forward))
     print(end_memory - start_memory)
     ready_op_node.performance_data["fw_memory"] = end_memory - start_memory
     return end_memory - start_memory
@@ -200,7 +203,7 @@ def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"
     call_intput_args = call_intput_args + get_op_args(ready_op_node, dtype)
     start_memory = max(memory_usage(op_point))
     def op_forward():
-        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params).asnumpy()
+        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
         # print(tvm_output)
         ready_op_node.performance_data["bw_value"] = op_res
     end_memory = max(memory_usage(op_forward))
