@@ -105,7 +105,7 @@ computation_graph = op_graph()
 def construct_op_graph(ir_module, ir_params, x):
     global op_index, computation_graph
     print("current entrance function length:", len(ir_module.functions.items()))
-    print(ir_module)
+    # print(ir_module)
     entrance_tuple = ir_module.functions.items()[0]
     global_var = entrance_tuple[0]
     main_function = entrance_tuple[1]
@@ -154,12 +154,12 @@ def get_op_args(ready_op_node, dtype):
         for key in ready_op_node.prior.keys():
             if ready_op_node.prior[key][0] == args_index:
                 if ready_op_node.prior[key][1].type == "call":
-                    intermeidiate_args.append(tvm.nd.array(ready_op_node.prior[key][1].performance_data["fw_value"].astype(dtype)))
+                    intermeidiate_args.append(ready_op_node.prior[key][1].performance_data["fw_value"].astype(dtype))
                 if ready_op_node.prior[key][1].type == "var":
                     # do not need to reinsert
                     # intermeidiate_args.append(
                     #     ready_op_node.prior[key][1].op_instance)
-                    print(ready_op_node.prior[key][1].op_instance)
+                    print("Find var and just neglect it.")
                 args_index+=1
     return intermeidiate_args
 
@@ -170,18 +170,18 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
     call_function = tvm.relay.Function(ready_op_node.op_instance.args, call_body)
     call_functions = {"GlobalVar": None, "main": call_function}
     call_ir_module = tvm.ir.IRModule(functions=call_functions)
-    print(call_ir_module)
+    # print(call_ir_module)
     with tvm.transform.PassContext(opt_level=1):
         call_interpreter = relay.build_module.create_executor("graph", call_ir_module, tvm.cpu(0), "llvm")
-    print(ir_params)
     call_intput_args = []
     call_intput_args.append(tvm.nd.array(x.astype(dtype)))
     call_intput_args = call_intput_args + get_op_args(ready_op_node, dtype)
     start_memory = max(memory_usage(op_point))
     def op_forward():
         tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params)
-        print(tvm_output)
-        ready_op_node.performance_data["fw_value"] = tvm_output.asnumpy()
+        print("type(tvm_output)")
+        print(type(tvm_output))
+        ready_op_node.performance_data["fw_value"] = tvm_output
         # print(tvm_output)
     end_memory = max(memory_usage(op_forward))
     print(end_memory - start_memory)
