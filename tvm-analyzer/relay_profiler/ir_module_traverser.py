@@ -160,7 +160,7 @@ def get_op_args(ready_op_node, dtype, params, x):
             if ready_op_node.prior[key][0] == args_index:
                 if ready_op_node.prior[key][1].type == "call":
                     # need to append intermeidiate_args:
-                    intermeidiate_args.append(ready_op_node.prior[key][1].performance_data["fw_value"].astype(dtype))
+                    intermeidiate_args.append(ready_op_node.prior[key][1].performance_data["fw_value"])
                 if ready_op_node.prior[key][1].type == "var":
                     # need to append params:
                     if ready_op_node.prior[key][1].name == '1':
@@ -174,11 +174,34 @@ def get_op_args(ready_op_node, dtype, params, x):
                 args_index+=1
     return intermeidiate_args
 
+def find_nd_array_args(ready_op_node, args_index):
+    for id_key in ready_op_node.prior.keys():
+        temp_index = ready_op_node.prior[id_key][0]
+        temp_prior_node = ready_op_node.prior[id_key][1]
+        if temp_index == args_index:
+            return temp_prior_node.performance_data["fw_value"].shape, temp_prior_node.performance_data["fw_value"].dtype
+    print("cannot find ", ready_op_node.id, "'s intermeidiate_arg in index :", args_index)
+    return None, None
+
+def generate_intermediate_symbolic_args(ready_op_node):
+    args_index = 0
+    new_args = []
+    for tvm_arg in ready_op_node.op_instance.args:
+        if isinstance(tvm_arg, tvm.relay.expr.Call):
+            s, d = find_nd_array_args(ready_op_node, args_index)
+            temp_arg = tvm.relay.var(str(args_index), shape=s, dtype=d)
+            new_args.append(temp_arg)
+        if isinstance(tvm_arg, tvm.relay.expr.Var):
+            new_args.append(tvm_arg)
+        args_index+=1
+    return new_args
+
 def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
     if ready_op_node.type == "var":
         return
-    print(ready_op_node.op_instance.args)
     call_body = ready_op_node.op_instance
+    new_args = generate_intermediate_symbolic_args(ready_op_node)
+    ready_op_node.op_instance.args = new_args
     call_function = tvm.relay.Function(ready_op_node.op_instance.args, call_body)
     call_functions = {"GlobalVar": None, "main": call_function}
     call_ir_module = tvm.ir.IRModule(functions=call_functions)
