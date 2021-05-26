@@ -36,7 +36,8 @@ input_name = "1"
 shape_dict = {input_name: x.shape}
 mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
 
-construct_op_graph(mod, params, x)
+construct_op_graph(mod)
+print(mod)
 profile_memory(params, x)
 
 # 基础组件是module，里面包含函数和参数、参数类型
