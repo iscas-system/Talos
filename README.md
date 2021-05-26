@@ -14,6 +14,10 @@ Talos is a dataflow analysis and scheduling tool for deep learning applications.
 
 [click here to see operator speedup awareness scheudling](java-operator-scheduler)
 
+# tvm based profiling
+
+[click here to see tvm based profiling](tvm-analyzer)
+
 # road map
 
 1. Select a proper deep learning framework to that can easily control operation location.
