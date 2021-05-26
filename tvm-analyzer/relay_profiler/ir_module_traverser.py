@@ -74,7 +74,7 @@ class op_graph:
             if fw:
                 profile_forward_relay_operator(temp_op, ir_params, x)
             if bw:
-                bw_m = profile_backward_relay_operator(temp, ir_params, x)
+                bw_m = profile_backward_relay_operator(temp_op, ir_params, x)
             for key in temp_op.next.keys():
                 if self.check_op_ready(temp_op.next[key][1]):
                     available_op_queue.append(temp_op.next[key][1])
@@ -120,7 +120,7 @@ def construct_op_graph(ir_module):
     recursive_traverse_op(main_function.body.attrs, main_function.body.args, temp_op=main_function.body)
 
 def profile_memory(ir_params, x):
-    computation_graph.traverse_and_calculate_per_op( ir_params, x)
+    computation_graph.traverse_and_calculate_per_op( ir_params, x, bw = True)
 
 
 def recursive_traverse_op(attrs, args, temp_op=None):
@@ -165,12 +165,13 @@ def get_op_args(ready_op_node, dtype, params, x):
                     # need to append params:
                     if ready_op_node.prior[key][1].name == '1':
                         # find x:
-                        print("find x")
+                        # print("find x")
                         intermeidiate_args.append(x.astype(dtype))
                     else:
                         # may be this is not necessary since its keywork arguments.
-                        print("find keyword arguments")
+                        # print("find keyword arguments")
                         # intermeidiate_args.append(params[ready_op_node.prior[key][1].name])
+                        pass
                 args_index+=1
     return intermeidiate_args
 
@@ -199,46 +200,37 @@ def generate_intermediate_symbolic_args(ready_op_node):
 def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
     if ready_op_node.type == "var":
         return
-    call_body = ready_op_node.op_instance
     new_args = generate_intermediate_symbolic_args(ready_op_node)
-    ready_op_node.op_instance.args = new_args
-    call_function = tvm.relay.Function(ready_op_node.op_instance.args, call_body)
+    temp_body = tvm.relay.Call(ready_op_node.op_instance.op, new_args, attrs=ready_op_node.op_instance.attrs)
+    call_function = tvm.relay.Function(new_args, temp_body)
     call_functions = {"GlobalVar": None, "main": call_function}
     call_ir_module = tvm.ir.IRModule(functions=call_functions)
+    # print(call_ir_module)
     with tvm.transform.PassContext(opt_level=1):
         call_interpreter = relay.build_module.create_executor("graph", call_ir_module, tvm.cpu(0), "llvm")
     call_intput_args = get_op_args(ready_op_node, dtype, ir_params, x)
     start_memory = max(memory_usage(op_point))
     def op_forward():
-        try:
-            tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params)
-            ready_op_node.performance_data["fw_value"] = tvm_output
-        except Exception as err:
-            print(err.args)
-            print(call_ir_module)
-            print("positional args:")
-            print(len(call_intput_args))
-            print("keyword args:")
-            print(ir_params.keys())
+        tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params)
+        ready_op_node.performance_data["fw_value"] = tvm_output
         # print(tvm_output)
     end_memory = max(memory_usage(op_forward))
-    print("end_memory - start_memory", end_memory - start_memory)
+    print("forward", ready_op_node.id,"end_memory - start_memory", end_memory - start_memory)
     ready_op_node.performance_data["fw_memory"] = end_memory - start_memory
     return end_memory - start_memory
 
 def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
     if ready_op_node.type == "var":
         return
-    call_body = ready_op_node.op_instance
-    call_function = tvm.relay.Function(ready_op_node.op_instance.args, call_body)
+    new_args = generate_intermediate_symbolic_args(ready_op_node)
+    temp_body = tvm.relay.Call(ready_op_node.op_instance.op, new_args, attrs=ready_op_node.op_instance.attrs)
+    call_function = tvm.relay.Function(new_args, temp_body)
     call_function = run_infer_type(call_function)
     bwd_func = run_infer_type(gradient(call_function))
     # compile in a different way:
     call_interpreter = relay.create_executor(device = tvm.cpu(0), target = "llvm")
     # prepare to run
-    call_intput_args = []
-    call_intput_args.append(tvm.nd.array(x.astype(dtype)))
-    call_intput_args = call_intput_args + get_op_args(ready_op_node, dtype)
+    call_intput_args = get_op_args(ready_op_node, dtype, ir_params, x)
     start_memory = max(memory_usage(op_point))
     def op_forward():
         try:
@@ -251,6 +243,6 @@ def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"
             print("keyword args:")
             print(ir_params)
     end_memory = max(memory_usage(op_forward))
-    print(end_memory - start_memory)
+    print("backward", ready_op_node.id, end_memory - start_memory)
     ready_op_node.performance_data["bw_memory"] = end_memory - start_memory
     return end_memory - start_memory
