@@ -10,6 +10,8 @@ from tvm.relay.testing import check_grad, run_infer_type
 from tvm.relay.transform import gradient
 from ir_module_traverser import construct_op_graph, profile_memory
 
+# python -m memory_profiler tvm-analyzer/relay_profiler/from_onnx.py
+
 model_url = "".join(
     [
         "https://gist.github.com/zhreshold/",

@@ -68,13 +68,13 @@ class op_graph:
     def traverse_and_calculate_per_op(self, ir_params, x, fw=True, bw=False):
         available_op_queue = self.find_starting_ops()
         debug_count = 0
-        N = 1000
+        N = 1
         while len(available_op_queue) > 0 and debug_count < N  :
             temp_op = available_op_queue.pop(0)
             if fw:
                 profile_forward_relay_operator(temp_op, ir_params, x)
             if bw:
-                bw_m = profile_backward_relay_operator(temp_op, ir_params, x)
+                profile_backward_relay_operator(temp_op, ir_params, x)
             for key in temp_op.next.keys():
                 if self.check_op_ready(temp_op.next[key][1]):
                     available_op_queue.append(temp_op.next[key][1])
@@ -209,15 +209,13 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
     with tvm.transform.PassContext(opt_level=1):
         call_interpreter = relay.build_module.create_executor("graph", call_ir_module, tvm.cpu(0), "llvm")
     call_intput_args = get_op_args(ready_op_node, dtype, ir_params, x)
-    start_memory = max(memory_usage(op_point))
+    @profile
     def op_forward():
         tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params)
         ready_op_node.performance_data["fw_value"] = tvm_output
         # print(tvm_output)
-    end_memory = max(memory_usage(op_forward))
-    print("forward", ready_op_node.id,"end_memory - start_memory", end_memory - start_memory)
-    ready_op_node.performance_data["fw_memory"] = end_memory - start_memory
-    return end_memory - start_memory
+    op_forward()
+    return 
 
 def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
     if ready_op_node.type == "var":
@@ -231,18 +229,10 @@ def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"
     call_interpreter = relay.create_executor(device = tvm.cpu(0), target = "llvm")
     # prepare to run
     call_intput_args = get_op_args(ready_op_node, dtype, ir_params, x)
-    start_memory = max(memory_usage(op_point))
-    def op_forward():
-        try:
-            op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
+    @profile
+    def op_backward():
+        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
         # print(tvm_output)
-            ready_op_node.performance_data["bw_value"] = op_res
-        except:
-            print("positional args:")
-            print(call_intput_args)
-            print("keyword args:")
-            print(ir_params)
-    end_memory = max(memory_usage(op_forward))
-    print("backward", ready_op_node.id, end_memory - start_memory)
-    ready_op_node.performance_data["bw_memory"] = end_memory - start_memory
-    return end_memory - start_memory
+        ready_op_node.performance_data["bw_value"] = op_res
+    op_backward()
+    return 
