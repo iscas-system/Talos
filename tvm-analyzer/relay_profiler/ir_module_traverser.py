@@ -4,10 +4,16 @@ import tvm
 from tvm import te
 import tvm.relay as relay
 from tvm.contrib.download import download_testdata
-from memory_profiler import memory_usage
+from memory_profiler import profile
 from tvm.relay.testing import check_grad, run_infer_type
 from tvm.relay.transform import gradient
 import sys
+import timeit
+import os
+import psutil
+
+profile_count=0
+profile_point=21
 
 class op_graph:
     def __init__(self):
@@ -66,10 +72,11 @@ class op_graph:
         return True
     
     def traverse_and_calculate_per_op(self, ir_params, x, fw=True, bw=False):
+        global profile_count
         available_op_queue = self.find_starting_ops()
-        debug_count = 0
-        N = 1
-        while len(available_op_queue) > 0 and debug_count < N  :
+        profile_count = 0
+        N = 100
+        while len(available_op_queue) > 0 :
             temp_op = available_op_queue.pop(0)
             if fw:
                 profile_forward_relay_operator(temp_op, ir_params, x)
@@ -78,7 +85,7 @@ class op_graph:
             for key in temp_op.next.keys():
                 if self.check_op_ready(temp_op.next[key][1]):
                     available_op_queue.append(temp_op.next[key][1])
-            debug_count +=1
+            profile_count +=1
 
 class op_node:
     # args_index:{id,}
@@ -143,10 +150,6 @@ def recursive_traverse_op(attrs, args, temp_op=None):
     computation_graph.insert_op(next_op_node)
     return next_op_node
 
-def op_point():
-    a = 1+1
-    return a
-
 def get_op_args(ready_op_node, dtype, params, x):
     intermeidiate_args = []
     args_index = 0
@@ -198,6 +201,7 @@ def generate_intermediate_symbolic_args(ready_op_node):
     return new_args
 
 def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
+    global profile_count, profile_point
     if ready_op_node.type == "var":
         return
     new_args = generate_intermediate_symbolic_args(ready_op_node)
@@ -209,15 +213,35 @@ def profile_forward_relay_operator(ready_op_node, ir_params, x, dtype="float32")
     with tvm.transform.PassContext(opt_level=1):
         call_interpreter = relay.build_module.create_executor("graph", call_ir_module, tvm.cpu(0), "llvm")
     call_intput_args = get_op_args(ready_op_node, dtype, ir_params, x)
+    call_params = ir_params
+    # np_running_time = timeit.timeit(
+    #     setup="import timeit\n"
+    #     "@profile\n"
+    #     "def op_forwardASAA():\n"
+    #     '  tvm_output = call_interpreter.evaluate()(*call_intput_args, **call_params)\n'
+    #     '  print(\'goodaaaaaaa\')\n',
+    #     stmt="op_forwardASAA()",
+    #     number=1,
+    #     globals=globals()
+    # )
+    print(ready_op_node.id)
     @profile
+    def op_forward_profile():
+        res = call_interpreter.evaluate()(*call_intput_args, **ir_params)
+        return res
+    
     def op_forward():
-        tvm_output = call_interpreter.evaluate()(*call_intput_args, **ir_params)
-        ready_op_node.performance_data["fw_value"] = tvm_output
-        # print(tvm_output)
-    op_forward()
+        res = call_interpreter.evaluate()(*call_intput_args, **ir_params)
+        return res
+    
+    if profile_count == profile_point:
+        ready_op_node.performance_data["fw_value"] = op_forward_profile()
+    else:
+        ready_op_node.performance_data["fw_value"] = op_forward()
     return 
 
 def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"):
+    global profile_count, profile_point
     if ready_op_node.type == "var":
         return
     new_args = generate_intermediate_symbolic_args(ready_op_node)
@@ -229,10 +253,18 @@ def profile_backward_relay_operator(ready_op_node, ir_params, x, dtype="float32"
     call_interpreter = relay.create_executor(device = tvm.cpu(0), target = "llvm")
     # prepare to run
     call_intput_args = get_op_args(ready_op_node, dtype, ir_params, x)
+    print(ready_op_node.id)
     @profile
+    def op_backward_profile():
+        res = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
+        return res
+    
     def op_backward():
-        op_res  = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
-        # print(tvm_output)
-        ready_op_node.performance_data["bw_value"] = op_res
-    op_backward()
+        res = call_interpreter.evaluate(bwd_func)(*call_intput_args, **ir_params)
+        return res
+    
+    if profile_count == profile_point:
+        ready_op_node.performance_data["bw_value"] = op_backward_profile()
+    else:
+        ready_op_node.performance_data["bw_value"] = op_backward()
     return 
