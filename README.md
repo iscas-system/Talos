@@ -20,10 +20,7 @@ Talos is a dataflow analysis and scheduling tool for deep learning applications.
 
 # road map
 
-1. Select a proper deep learning framework to that can easily control operation location.
-2. Modify an existing framework to support operator speedup ratio awareness scheduling.
-3. integrate existing data or model parallel mechanisms to make the scheduling practical.
-4. optimize existing device placement granularity and strategy. 
+1. qbstract common APIs
 
 # problems 
 
