@@ -1,26 +1,18 @@
 # Talos
 
-Talos is a dataflow analysis and scheduling tool for deep learning applications.
+Talos is a dataflow analysis and scheduling tool for deep learning applications. It has already be accepted by [ASAP 21](https://2021.asapconference.org/programOfEvents.html)
 
-# operator speedup analysis for pytorch
+## operator speedup analysis for pytorch
 
 [click here to see pytorch operator chrome tracing](pytorch-analyzer)
 
-# operator speedup analysis for TensorFlow
+## operator speedup analysis for TensorFlow
 
 [click here to see tensorflow operator chrome tracing](tensorflow-analyzer)
 
-# operator speedup aware scheduling
+## operator speedup aware scheduling
 
 [click here to see operator speedup awareness scheudling](java-operator-scheduler)
-
-# tvm based profiling
-
-[click here to see tvm based profiling](tvm-analyzer)
-
-# road map
-
-1. qbstract common APIs
 
 # problems 
 
