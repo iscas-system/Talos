@@ -1,10 +1,12 @@
 # Talos
 
-Talos is a dataflow analysis and scheduling tool for deep learning applications. It has already be accepted by [ASAP 21](https://2021.asapconference.org/programOfEvents.html)
+Talos is a dataflow analysis and scheduling tool for deep learning applications. It has already be accepted by [ASAP 21](https://ieeexplore.ieee.org/abstract/document/9516647/)
 
 Yuanjia XU, Heng WU*, Wenbo ZHANG, Tao WANG, Chen YANG, Heran GAO. Talos: A Weighted Speedup-Aware Device Placement of Deep Learning Models.  The 32nd IEEE International Conference on Application-specific Systems, Architectures and Processors (ASAP 2021). 101-108
 
-[Talos paper can be found here.](talos.pdf)
+[Talos paper can be found here.](Talos_A_Weighted_Speedup-Aware_Device_Placement_of_Deep_Learning_Models.pdf)
+
+This work is supported in part by National Key R&D Program of China (No. 2018YFB1402503), National Natural Science Foundation of China (No. 61872344) and Youth Innovation Promotion Association of Chinese Academy of Sciences Fund (No. 2018144).
 
 ## operator speedup analysis for pytorch
 
